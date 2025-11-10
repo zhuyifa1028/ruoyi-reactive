@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 
 /**
  * 注册验证
@@ -25,11 +26,11 @@ public class SysRegisterController extends BaseController {
     private ISysConfigService configService;
 
     @PostMapping("/register")
-    public AjaxResult register(@RequestBody RegisterBody user) {
+    public AjaxResult register(@RequestBody RegisterBody user, ServerWebExchange exchange) {
         if (!("true".equals(configService.selectConfigByKey("sys.account.registerUser")))) {
             return error("当前系统没有开启注册功能！");
         }
-        String msg = registerService.register(user);
+        String msg = registerService.register(user, exchange);
         return StringUtils.isEmpty(msg) ? success() : error(msg);
     }
 }

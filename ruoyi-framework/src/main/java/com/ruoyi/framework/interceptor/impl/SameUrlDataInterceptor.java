@@ -1,21 +1,25 @@
 package com.ruoyi.framework.interceptor.impl;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ruoyi.common.annotation.RepeatSubmit;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.redis.RedisCache;
-import com.ruoyi.common.filter.RepeatedlyRequestWrapper;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.http.HttpHelper;
 import com.ruoyi.framework.interceptor.RepeatSubmitInterceptor;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 判断请求url和数据是否和上一次相同，
@@ -25,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
+    private static final Logger log = LoggerFactory.getLogger(SameUrlDataInterceptor.class);
     public final String REPEAT_PARAMS = "repeatParams";
 
     public final String REPEAT_TIME = "repeatTime";
@@ -33,46 +38,60 @@ public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
     @Value("${token.header}")
     private String header;
 
-    @Autowired
+    @Resource
     private RedisCache redisCache;
 
-    @SuppressWarnings("unchecked")
     @Override
-    public boolean isRepeatSubmit(HttpServletRequest request, RepeatSubmit annotation) {
-        String nowParams = "";
-        if (request instanceof RepeatedlyRequestWrapper) {
-            RepeatedlyRequestWrapper repeatedlyRequest = (RepeatedlyRequestWrapper) request;
-            nowParams = HttpHelper.getBodyString(repeatedlyRequest);
-        }
+    public boolean isRepeatSubmit(ServerWebExchange exchange, RepeatSubmit annotation) {
+        AtomicReference<String> nowParams = new AtomicReference<>("");
+
+        ServerHttpRequest request = exchange.getRequest();
+        // 请求体
+        request.getBody()
+                .reduce(new StringBuilder(), (sb, dataBuffer) -> {
+                    byte[] bytes = new byte[dataBuffer.readableByteCount()];
+                    dataBuffer.read(bytes);
+                    sb.append(new String(bytes, StandardCharsets.UTF_8));
+                    return sb;
+                })
+                .defaultIfEmpty(new StringBuilder())
+                .flatMap(sb -> {
+                    nowParams.set(sb.toString());
+                    return Mono.empty();
+                })
+                .subscribe();
 
         // body参数为空，获取Parameter的数据
-        if (StringUtils.isEmpty(nowParams)) {
-            nowParams = JSON.toJSONString(request.getParameterMap());
+        if (StringUtils.isEmpty(nowParams.get())) {
+            try {
+                nowParams.set(objectMapper.writeValueAsString(request.getQueryParams()));
+            } catch (JsonProcessingException e) {
+                log.error("请求参数转Json字符串异常", e);
+            }
         }
-        Map<String, Object> nowDataMap = new HashMap<String, Object>();
+
+        Map<String, Object> nowDataMap = new HashMap<>();
         nowDataMap.put(REPEAT_PARAMS, nowParams);
         nowDataMap.put(REPEAT_TIME, System.currentTimeMillis());
 
         // 请求地址（作为存放cache的key值）
-        String url = request.getRequestURI();
+        String url = request.getURI().getPath();
 
         // 唯一值（没有消息头则使用请求地址）
-        String submitKey = StringUtils.trimToEmpty(request.getHeader(header));
+        String submitKey = StringUtils.trimToEmpty(request.getHeaders().getFirst(header));
 
         // 唯一标识（指定key + url + 消息头）
         String cacheRepeatKey = CacheConstants.REPEAT_SUBMIT_KEY + url + submitKey;
 
-        Object sessionObj = redisCache.getCacheObject(cacheRepeatKey);
-        if (sessionObj != null) {
-            Map<String, Object> sessionMap = (Map<String, Object>) sessionObj;
-            if (sessionMap.containsKey(url)) {
-                Map<String, Object> preDataMap = (Map<String, Object>) sessionMap.get(url);
-                if (compareParams(nowDataMap, preDataMap) && compareTime(nowDataMap, preDataMap, annotation.interval())) {
-                    return true;
-                }
+        Map<String, Map<String, Object>> cacheObject = redisCache.getCacheObject(cacheRepeatKey);
+        if (cacheObject != null && cacheObject.containsKey(url)) {
+            Map<String, Object> preDataMap = cacheObject.get(url);
+            if (compareParams(nowDataMap, preDataMap) && compareTime(nowDataMap, preDataMap, annotation.interval())) {
+                return true;
             }
         }
-        Map<String, Object> cacheMap = new HashMap<String, Object>();
+
+        Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         cacheMap.put(url, nowDataMap);
         redisCache.setCacheObject(cacheRepeatKey, cacheMap, annotation.interval(), TimeUnit.MILLISECONDS);
         return false;
@@ -93,9 +112,6 @@ public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
     private boolean compareTime(Map<String, Object> nowMap, Map<String, Object> preMap, int interval) {
         long time1 = (Long) nowMap.get(REPEAT_TIME);
         long time2 = (Long) preMap.get(REPEAT_TIME);
-        if ((time1 - time2) < interval) {
-            return true;
-        }
-        return false;
+        return (time1 - time2) < interval;
     }
 }

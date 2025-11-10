@@ -8,7 +8,6 @@ import com.ruoyi.common.core.domain.model.LoginBody;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.service.SysLoginService;
 import com.ruoyi.framework.web.service.SysPermissionService;
@@ -20,6 +19,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.List;
@@ -54,13 +55,14 @@ public class SysLoginController {
      * @return 结果
      */
     @PostMapping("/login")
-    public AjaxResult login(@RequestBody LoginBody loginBody) {
-        AjaxResult ajax = AjaxResult.success();
+    public Mono<AjaxResult> login(@RequestBody LoginBody loginBody, ServerWebExchange exchange) {
         // 生成令牌
-        String token = loginService.login(loginBody.getUsername(), loginBody.getPassword(), loginBody.getCode(),
-                loginBody.getUuid());
-        ajax.put(Constants.TOKEN, token);
-        return ajax;
+        return loginService.login(loginBody, exchange)
+                .flatMap(token -> {
+                    AjaxResult ajax = AjaxResult.success();
+                    ajax.put(Constants.TOKEN, token);
+                    return Mono.just(ajax);
+                });
     }
 
     /**
@@ -69,8 +71,8 @@ public class SysLoginController {
      * @return 用户信息
      */
     @GetMapping("getInfo")
-    public AjaxResult getInfo() {
-        LoginUser loginUser = SecurityUtils.getLoginUser();
+    public AjaxResult getInfo(ServerWebExchange exchange) {
+        LoginUser loginUser = tokenService.getLoginUser(exchange);
         SysUser user = loginUser.getUser();
         // 角色集合
         Set<String> roles = permissionService.getRolePermission(user);
@@ -95,8 +97,9 @@ public class SysLoginController {
      * @return 路由信息
      */
     @GetMapping("getRouters")
-    public AjaxResult getRouters() {
-        Long userId = SecurityUtils.getUserId();
+    public AjaxResult getRouters(ServerWebExchange exchange) {
+        LoginUser loginUser = tokenService.getLoginUser(exchange);
+        Long userId = loginUser.getUserId();
         List<SysMenu> menus = menuService.selectMenuTreeByUserId(userId);
         return AjaxResult.success(menuService.buildMenus(menus));
     }

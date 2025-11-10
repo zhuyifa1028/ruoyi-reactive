@@ -1,3 +1,4 @@
+#file: noinspection SpringBootApplicationYaml
 # 项目相关配置
 ruoyi:
   # 名称
@@ -88,6 +89,8 @@ spring:
           max-active: 8
           # #连接池最大阻塞等待时间（使用负值表示没有限制）
           max-wait: -1ms
+  main:
+    web-application-type: reactive
 
 # token配置
 token:

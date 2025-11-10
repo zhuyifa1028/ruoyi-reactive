@@ -1,13 +1,11 @@
 package com.ruoyi.framework.config;
 
-import com.ruoyi.common.constant.Constants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
-import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+import org.springframework.web.server.i18n.AcceptHeaderLocaleContextResolver;
+import org.springframework.web.server.i18n.LocaleContextResolver;
+
+import java.util.Locale;
 
 /**
  * 资源文件配置加载
@@ -15,25 +13,14 @@ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
  * @author ruoyi
  */
 @Configuration
-public class I18nConfig implements WebMvcConfigurer {
+public class I18nConfig {
+
     @Bean
-    public LocaleResolver localeResolver() {
-        SessionLocaleResolver slr = new SessionLocaleResolver();
+    public LocaleContextResolver localeResolver() {
+        AcceptHeaderLocaleContextResolver resolver = new AcceptHeaderLocaleContextResolver();
         // 默认语言
-        slr.setDefaultLocale(Constants.DEFAULT_LOCALE);
-        return slr;
+        resolver.setDefaultLocale(Locale.SIMPLIFIED_CHINESE);
+        return resolver;
     }
 
-    @Bean
-    public LocaleChangeInterceptor localeChangeInterceptor() {
-        LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
-        // 参数名
-        lci.setParamName("lang");
-        return lci;
-    }
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(localeChangeInterceptor());
-    }
 }

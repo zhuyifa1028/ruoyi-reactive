@@ -2,7 +2,6 @@ package com.ruoyi.framework.manager.factory;
 
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.utils.LogUtils;
-import com.ruoyi.common.utils.ServletUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.ip.AddressUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
@@ -14,6 +13,7 @@ import com.ruoyi.system.service.ISysOperLogService;
 import eu.bitwalker.useragentutils.UserAgent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.server.ServerWebExchange;
 
 import java.util.TimerTask;
 
@@ -34,22 +34,21 @@ public class AsyncFactory {
      * @param args     列表
      * @return 任务task
      */
-    public static TimerTask recordLogininfor(final String username, final String status, final String message,
+    public static TimerTask recordLogininfor(ServerWebExchange exchange, final String username, final String status, final String message,
                                              final Object... args) {
-        final UserAgent userAgent = UserAgent.parseUserAgentString(ServletUtils.getRequest().getHeader("User-Agent"));
-        final String ip = IpUtils.getIpAddr();
+        final UserAgent userAgent = UserAgent.parseUserAgentString(exchange.getRequest().getHeaders().getFirst("User-Agent"));
+        final String ip = IpUtils.getIpAddr(exchange);
         return new TimerTask() {
             @Override
             public void run() {
                 String address = AddressUtils.getRealAddressByIP(ip);
-                StringBuilder s = new StringBuilder();
-                s.append(LogUtils.getBlock(ip));
-                s.append(address);
-                s.append(LogUtils.getBlock(username));
-                s.append(LogUtils.getBlock(status));
-                s.append(LogUtils.getBlock(message));
+                String s = LogUtils.getBlock(ip) +
+                        address +
+                        LogUtils.getBlock(username) +
+                        LogUtils.getBlock(status) +
+                        LogUtils.getBlock(message);
                 // 打印信息到日志
-                sys_user_logger.info(s.toString(), args);
+                sys_user_logger.info(s, args);
                 // 获取客户端操作系统
                 String os = userAgent.getOperatingSystem().getName();
                 // 获取客户端浏览器

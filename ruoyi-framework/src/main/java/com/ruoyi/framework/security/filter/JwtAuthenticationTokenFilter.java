@@ -1,21 +1,19 @@
 package com.ruoyi.framework.security.filter;
 
-import java.io.IOException;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
 import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.web.ReactiveRequestContextHolder;
 import com.ruoyi.framework.web.service.TokenService;
+import jakarta.annotation.Resource;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 /**
  * token过滤器 验证token有效性
@@ -23,20 +21,23 @@ import com.ruoyi.framework.web.service.TokenService;
  * @author ruoyi
  */
 @Component
-public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
-    @Autowired
+public class JwtAuthenticationTokenFilter implements WebFilter {
+
+    @Resource
     private TokenService tokenService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
-        LoginUser loginUser = tokenService.getLoginUser(request);
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        LoginUser loginUser = tokenService.getLoginUser(exchange);
         if (StringUtils.isNotNull(loginUser) && StringUtils.isNull(SecurityUtils.getAuthentication())) {
             tokenService.verifyToken(loginUser);
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
-            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            var authentication = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
+            var context = new SecurityContextImpl(authentication);
+            return chain.filter(exchange)
+                    .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+                    .contextWrite(ReactiveRequestContextHolder.withRequestContext(exchange));
         }
-        chain.doFilter(request, response);
+        return chain.filter(exchange).contextWrite(context -> context.put(ServerWebExchange.class, exchange));
     }
+
 }
