@@ -1,116 +1,97 @@
 package com.ruoyi.web.controller.system;
 
+import com.github.pagehelper.PageHelper;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.page.PageDomain;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.ruoyi.common.utils.sql.SqlUtil;
 import com.ruoyi.system.domain.SysConfig;
-import com.ruoyi.system.service.ISysConfigService;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ruoyi.system.dto.SysConfigDTO;
+import com.ruoyi.system.service.SysConfigService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-/**
- * 参数配置 信息操作处理
- *
- * @author ruoyi
- */
+@Tag(name = "配置表 接口")
 @RestController
 @RequestMapping("/system/config")
 public class SysConfigController extends BaseController {
-    @Autowired
-    private ISysConfigService configService;
 
-    /**
-     * 获取参数配置列表
-     */
+    @Resource
+    private SysConfigService sysConfigService;
+
+    @Operation(summary = "获取配置列表")
     @PreAuthorize("@ss.hasPermi('system:config:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysConfig config) {
-        startPage();
-        List<SysConfig> list = configService.selectConfigList(config);
+    public TableDataInfo list(SysConfig config, PageDomain pageDomain) {
+        Integer pageNum = pageDomain.getPageNum();
+        Integer pageSize = pageDomain.getPageSize();
+        String orderBy = SqlUtil.escapeOrderBySql(pageDomain.getOrderBy());
+        Boolean reasonable = pageDomain.getReasonable();
+        PageHelper.startPage(pageNum, pageSize, orderBy).setReasonable(reasonable);
+
+        List<SysConfig> list = sysConfigService.selectConfigList(config);
         return getDataTable(list);
     }
 
-    @Log(title = "参数管理", businessType = BusinessType.EXPORT)
-    @PreAuthorize("@ss.hasPermi('system:config:export')")
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, SysConfig config) {
-        List<SysConfig> list = configService.selectConfigList(config);
-        ExcelUtil<SysConfig> util = new ExcelUtil<SysConfig>(SysConfig.class);
-        util.exportExcel(response, list, "参数数据");
-    }
-
-    /**
-     * 根据参数编号获取详细信息
-     */
+    @Operation(summary = "根据配置编号获取详细信息")
     @PreAuthorize("@ss.hasPermi('system:config:query')")
     @GetMapping(value = "/{configId}")
-    public AjaxResult getInfo(@PathVariable Long configId) {
-        return success(configService.selectConfigById(configId));
+    public Mono<AjaxResult> getInfo(@PathVariable Long configId) {
+        return sysConfigService.selectConfigById(configId)
+                .map(AjaxResult::success);
     }
 
-    /**
-     * 根据参数键名查询参数值
-     */
+    @Operation(summary = "根据配置键名查询配置值")
     @GetMapping(value = "/configKey/{configKey}")
-    public AjaxResult getConfigKey(@PathVariable String configKey) {
-        return success(configService.selectConfigByKey(configKey));
+    public Mono<AjaxResult> getConfigKey(@PathVariable String configKey) {
+        return sysConfigService.selectConfigByKey(configKey)
+                .map(AjaxResult::success);
     }
 
-    /**
-     * 新增参数配置
-     */
+    @Operation(summary = "新增配置")
+    @Log(title = "配置管理", businessType = BusinessType.INSERT)
     @PreAuthorize("@ss.hasPermi('system:config:add')")
-    @Log(title = "参数管理", businessType = BusinessType.INSERT)
     @PostMapping
-    public AjaxResult add(@Validated @RequestBody SysConfig config) {
-        if (!configService.checkConfigKeyUnique(config)) {
-            return error("新增参数'" + config.getConfigName() + "'失败，参数键名已存在");
-        }
-        config.setCreateBy(getUsername());
-        return toAjax(configService.insertConfig(config));
+    public Mono<AjaxResult> add(@Validated @RequestBody SysConfigDTO dto) {
+        return sysConfigService.insertConfig(dto)
+                .thenReturn(AjaxResult.success());
     }
 
-    /**
-     * 修改参数配置
-     */
+    @Operation(summary = "修改配置")
+    @Log(title = "配置管理", businessType = BusinessType.UPDATE)
     @PreAuthorize("@ss.hasPermi('system:config:edit')")
-    @Log(title = "参数管理", businessType = BusinessType.UPDATE)
     @PutMapping
-    public AjaxResult edit(@Validated @RequestBody SysConfig config) {
-        if (!configService.checkConfigKeyUnique(config)) {
-            return error("修改参数'" + config.getConfigName() + "'失败，参数键名已存在");
-        }
-        config.setUpdateBy(getUsername());
-        return toAjax(configService.updateConfig(config));
+    public Mono<AjaxResult> edit(@Validated @RequestBody SysConfigDTO dto) {
+        return sysConfigService.updateConfig(dto)
+                .thenReturn(AjaxResult.success());
     }
 
-    /**
-     * 删除参数配置
-     */
+    @Operation(summary = "批量删除配置")
+    @Log(title = "配置管理", businessType = BusinessType.DELETE)
     @PreAuthorize("@ss.hasPermi('system:config:remove')")
-    @Log(title = "参数管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{configIds}")
-    public AjaxResult remove(@PathVariable Long[] configIds) {
-        configService.deleteConfigByIds(configIds);
-        return success();
+    public Mono<AjaxResult> remove(@PathVariable List<Long> configIds) {
+        return sysConfigService.deleteConfigByIds(configIds)
+                .thenReturn(AjaxResult.success());
     }
 
-    /**
-     * 刷新参数缓存
-     */
+    @Operation(summary = "刷新配置缓存")
+    @Log(title = "配置管理", businessType = BusinessType.CLEAN)
     @PreAuthorize("@ss.hasPermi('system:config:remove')")
-    @Log(title = "参数管理", businessType = BusinessType.CLEAN)
     @DeleteMapping("/refreshCache")
-    public AjaxResult refreshCache() {
-        configService.resetConfigCache();
-        return success();
+    public Mono<AjaxResult> refreshCache() {
+        return sysConfigService.resetConfigCache()
+                .thenReturn(AjaxResult.success());
     }
+
 }

@@ -15,8 +15,8 @@ import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.framework.security.context.AuthenticationContextHolder;
 import com.ruoyi.framework.web.service.TokenService;
-import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.SysConfigService;
 import jakarta.annotation.Resource;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -49,7 +49,7 @@ public class SysLoginService {
     private ISysUserService userService;
 
     @Resource
-    private ISysConfigService configService;
+    private SysConfigService configService;
 
     /**
      * 登录验证
@@ -131,11 +131,13 @@ public class SysLoginService {
             throw new UserPasswordNotMatchException();
         }
         // IP黑名单校验
-        String blackStr = configService.selectConfigByKey("sys.login.blackIPList");
-        if (IpUtils.isMatchedIp(blackStr, IpUtils.getIpAddr(exchange))) {
-            AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("login.blocked")));
-            throw new BlackListException();
-        }
+        configService.selectConfigByKey("sys.login.blackIPList")
+                .subscribe(blackStr -> {
+                    if (IpUtils.isMatchedIp(blackStr, IpUtils.getIpAddr(exchange))) {
+                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("login.blocked")));
+                        throw new BlackListException();
+                    }
+                });
     }
 
     /**

@@ -1,105 +1,57 @@
 package com.ruoyi.system.service.impl;
 
-import com.ruoyi.common.annotation.DataSource;
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.redis.RedisCache;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.enums.DataSourceType;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.redis.ReactiveRedisUtils;
+import com.ruoyi.system.converter.SysConfigConverter;
 import com.ruoyi.system.domain.SysConfig;
+import com.ruoyi.system.dto.SysConfigDTO;
 import com.ruoyi.system.mapper.SysConfigMapper;
 import com.ruoyi.system.repository.SysConfigRepository;
-import com.ruoyi.system.service.ISysConfigService;
-import jakarta.annotation.PostConstruct;
+import com.ruoyi.system.service.SysConfigService;
+import com.ruoyi.system.vo.SysConfigVO;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
- * 参数配置 服务层实现
+ * 配置表 业务实现
  *
- * @author ruoyi
+ * @author bugout
+ * @version 2025-11-11
  */
 @Service
-public class SysConfigServiceImpl implements ISysConfigService {
+public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner {
 
+    @Resource
+    private SysConfigConverter sysConfigConverter;
     @Resource
     private SysConfigRepository sysConfigRepository;
 
-    @Autowired
+    @Resource
     private SysConfigMapper configMapper;
 
-    @Autowired
-    private RedisCache redisCache;
+    @Resource
+    private ReactiveRedisUtils<String> reactiveRedisUtils;
 
     /**
      * 项目启动时，初始化参数到缓存
      */
-    @PostConstruct
-    public void init() {
-        loadingConfigCache();
-    }
-
-    /**
-     * 查询参数配置信息
-     *
-     * @param configId 参数配置ID
-     * @return 参数配置信息
-     */
     @Override
-    @DataSource(DataSourceType.MASTER)
-    public SysConfig selectConfigById(Long configId) {
-        SysConfig config = new SysConfig();
-        config.setConfigId(configId);
-        return configMapper.selectConfig(config);
+    public void run(ApplicationArguments args) {
+        this.resetConfigCache().subscribe();
     }
 
     /**
-     * 根据键名查询参数配置信息
-     *
-     * @param configKey 参数key
-     * @return 参数键值
-     */
-    @Override
-    public String selectConfigByKey(String configKey) {
-        String configValue = Convert.toStr(redisCache.getCacheObject(getCacheKey(configKey)));
-        if (StringUtils.isNotEmpty(configValue)) {
-            return configValue;
-        }
-        SysConfig config = new SysConfig();
-        config.setConfigKey(configKey);
-        SysConfig retConfig = configMapper.selectConfig(config);
-        if (StringUtils.isNotNull(retConfig)) {
-            redisCache.setCacheObject(getCacheKey(configKey), retConfig.getConfigValue());
-            return retConfig.getConfigValue();
-        }
-        return StringUtils.EMPTY;
-    }
-
-    /**
-     * 获取验证码开关
-     *
-     * @return true开启，false关闭
-     */
-    @Override
-    public boolean selectCaptchaEnabled() {
-        String captchaEnabled = selectConfigByKey("sys.account.captchaEnabled");
-        if (StringUtils.isEmpty(captchaEnabled)) {
-            return true;
-        }
-        return Convert.toBool(captchaEnabled);
-    }
-
-    /**
-     * 查询参数配置列表
-     *
-     * @param config 参数配置信息
-     * @return 参数配置集合
+     * 获取配置列表
      */
     @Override
     public List<SysConfig> selectConfigList(SysConfig config) {
@@ -107,107 +59,140 @@ public class SysConfigServiceImpl implements ISysConfigService {
     }
 
     /**
-     * 新增参数配置
-     *
-     * @param config 参数配置信息
-     * @return 结果
+     * 根据配置编号获取详细信息
      */
     @Override
-    public int insertConfig(SysConfig config) {
-        int row = configMapper.insertConfig(config);
-        if (row > 0) {
-            redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
-        }
-        return row;
+    public Mono<SysConfigVO> selectConfigById(Long configId) {
+        return sysConfigRepository.findById(configId)
+                .switchIfEmpty(Mono.error(new ServiceException("配置不存在")))
+                .map(sysConfigConverter::toSysConfigVO);
     }
 
     /**
-     * 修改参数配置
-     *
-     * @param config 参数配置信息
-     * @return 结果
+     * 根据配置键名查询配置值
      */
     @Override
-    public int updateConfig(SysConfig config) {
-        SysConfig temp = configMapper.selectConfigById(config.getConfigId());
-        if (!StringUtils.equals(temp.getConfigKey(), config.getConfigKey())) {
-            redisCache.deleteObject(getCacheKey(temp.getConfigKey()));
-        }
-
-        int row = configMapper.updateConfig(config);
-        if (row > 0) {
-            redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue());
-        }
-        return row;
+    public Mono<String> selectConfigByKey(String configKey) {
+        // 先从redis取
+        return reactiveRedisUtils.getCacheObject(getCacheKey(configKey))
+                .switchIfEmpty(Mono.defer(() -> {
+                    // 查询数据库
+                    return sysConfigRepository.findByConfigKey(configKey)
+                            .flatMap(config -> {
+                                // 缓存到redis
+                                return reactiveRedisUtils.setCacheObject(getCacheKey(configKey), config.getConfigValue())
+                                        .thenReturn(config.getConfigValue());
+                            });
+                }))
+                .defaultIfEmpty(StringUtils.EMPTY);
     }
 
     /**
-     * 批量删除参数信息
-     *
-     * @param configIds 需要删除的参数ID
+     * 获取验证码开关
      */
     @Override
-    public void deleteConfigByIds(Long[] configIds) {
-        for (Long configId : configIds) {
-            SysConfig config = selectConfigById(configId);
-            if (StringUtils.equals(UserConstants.YES, config.getConfigType())) {
-                throw new ServiceException(String.format("内置参数【%1$s】不能删除 ", config.getConfigKey()));
-            }
-            configMapper.deleteConfigById(configId);
-            redisCache.deleteObject(getCacheKey(config.getConfigKey()));
+    public boolean selectCaptchaEnabled() {
+        SysConfig retConfig = configMapper.checkConfigKeyUnique("sys.account.captchaEnabled");
+        if (StringUtils.isNotNull(retConfig)) {
+
+            return BooleanUtils.toBoolean(retConfig.getConfigValue());
         }
+        return false;
     }
 
     /**
-     * 加载参数缓存数据
+     * 新增配置
      */
     @Override
-    public void loadingConfigCache() {
-        sysConfigRepository.findAll()
-                .subscribe(config -> redisCache.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue()));
+    public Mono<Boolean> insertConfig(SysConfigDTO dto) {
+        // 检查参数键名
+        return this.checkConfigKeyUnique(dto)
+                // 保存到数据库
+                .then(Mono.defer(() -> sysConfigRepository.save(sysConfigConverter.toSysConfig(dto))))
+                // 缓存到redis
+                .then(reactiveRedisUtils.setCacheObject(getCacheKey(dto.getConfigKey()), dto.getConfigValue()));
     }
 
     /**
-     * 清空参数缓存数据
+     * 校验参数键名是否唯一
+     */
+    private Mono<Void> checkConfigKeyUnique(SysConfigDTO dto) {
+        return sysConfigRepository.findByConfigKey(dto.getConfigKey())
+                .flatMap(info -> {
+                    if (ObjectUtils.notEqual(info.getConfigId(), dto.getConfigId())) {
+                        return Mono.error(new ServiceException(String.format("参数【%1$s】已存在 ", dto.getConfigKey())));
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    /**
+     * 修改配置
      */
     @Override
-    public void clearConfigCache() {
-        Collection<String> keys = redisCache.keys(CacheConstants.SYS_CONFIG_KEY + "*");
-        redisCache.deleteObject(keys);
+    public Mono<Boolean> updateConfig(SysConfigDTO dto) {
+        return sysConfigRepository.findById(dto.getConfigId())
+                // 配置为空
+                .switchIfEmpty(Mono.error(new ServiceException("配置不存在")))
+                // 检查配置键名
+                .flatMap(info -> this.checkConfigKeyUnique(dto).thenReturn(info))
+                // 删除redis缓存
+                .flatMap(info -> {
+                    if (ObjectUtils.notEqual(info.getConfigKey(), dto.getConfigKey())) {
+                        return reactiveRedisUtils.deleteObject(getCacheKey(info.getConfigKey())).thenReturn(info);
+                    }
+                    return Mono.just(info);
+                })
+                // 保存到数据库
+                .flatMap(info -> {
+                    sysConfigConverter.copyProperties(dto, info);
+                    return sysConfigRepository.save(info);
+                })
+                // 缓存到redis
+                .then(reactiveRedisUtils.setCacheObject(getCacheKey(dto.getConfigKey()), dto.getConfigValue()));
+    }
+
+    /**
+     * 批量删除配置
+     */
+    @Override
+    public Mono<Void> deleteConfigByIds(List<Long> configIds) {
+        return sysConfigRepository.findAllById(configIds)
+                .flatMap(config -> {
+                    if (StringUtils.equals(UserConstants.YES, config.getConfigType())) {
+                        return Mono.error(new ServiceException(String.format("内置参数【%1$s】不能删除 ", config.getConfigKey())));
+                    }
+
+                    // 删除配置
+                    return sysConfigRepository.delete(config)
+                            // 删除redis缓存
+                            .then(reactiveRedisUtils.deleteObject(getCacheKey(config.getConfigKey())));
+                })
+                .then();
     }
 
     /**
      * 重置参数缓存数据
      */
     @Override
-    public void resetConfigCache() {
-        clearConfigCache();
-        loadingConfigCache();
-    }
-
-    /**
-     * 校验参数键名是否唯一
-     *
-     * @param config 参数配置信息
-     * @return 结果
-     */
-    @Override
-    public boolean checkConfigKeyUnique(SysConfig config) {
-        Long configId = StringUtils.isNull(config.getConfigId()) ? -1L : config.getConfigId();
-        SysConfig info = configMapper.checkConfigKeyUnique(config.getConfigKey());
-        if (StringUtils.isNotNull(info) && info.getConfigId().longValue() != configId.longValue()) {
-            return UserConstants.NOT_UNIQUE;
-        }
-        return UserConstants.UNIQUE;
+    public Mono<Void> resetConfigCache() {
+        // 获取缓存key
+        return reactiveRedisUtils.keys(CacheConstants.SYS_CONFIG_KEY + "*")
+                // 批量删除缓存
+                .transform(keys -> reactiveRedisUtils.deleteObject(keys))
+                // 查询所有配置
+                .thenMany(sysConfigRepository.findAll())
+                // 缓存到redis
+                .flatMap(config -> reactiveRedisUtils.setCacheObject(getCacheKey(config.getConfigKey()), config.getConfigValue()))
+                // 结束
+                .then();
     }
 
     /**
      * 设置cache key
-     *
-     * @param configKey 参数键
-     * @return 缓存键key
      */
     private String getCacheKey(String configKey) {
         return CacheConstants.SYS_CONFIG_KEY + configKey;
     }
+
 }

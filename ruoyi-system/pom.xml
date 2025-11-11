@@ -23,6 +23,13 @@
             <artifactId>ruoyi-framework</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+            <version>2.5.0</version>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

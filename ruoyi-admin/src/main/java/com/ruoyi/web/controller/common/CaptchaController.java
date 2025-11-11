@@ -8,7 +8,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.utils.sign.Base64;
 import com.ruoyi.common.utils.uuid.IdUtils;
-import com.ruoyi.system.service.ISysConfigService;
+import com.ruoyi.system.service.SysConfigService;
 import jakarta.annotation.Resource;
 import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +36,7 @@ public class CaptchaController {
     private RedisCache redisCache;
 
     @Resource
-    private ISysConfigService configService;
+    private SysConfigService configService;
 
     /**
      * 生成验证码

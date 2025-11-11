@@ -10,8 +10,8 @@ import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.service.TokenService;
-import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysMenuService;
+import com.ruoyi.system.service.SysConfigService;
 import com.ruoyi.system.service.impl.SysLoginService;
 import com.ruoyi.system.service.impl.SysPermissionService;
 import jakarta.annotation.Resource;
@@ -47,7 +47,7 @@ public class SysLoginController {
     private TokenService tokenService;
 
     @Resource
-    private ISysConfigService configService;
+    private SysConfigService configService;
 
     /**
      * 登录方法
