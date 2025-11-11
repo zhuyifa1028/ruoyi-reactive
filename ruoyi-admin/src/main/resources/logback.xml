@@ -75,6 +75,7 @@
     <logger name="com.ruoyi" level="info"/>
     <!-- Spring日志级别控制  -->
     <logger name="org.springframework" level="warn"/>
+    <logger name="org.springframework.r2dbc" level="DEBUG"/>
 
     <root level="info">
         <appender-ref ref="console"/>
