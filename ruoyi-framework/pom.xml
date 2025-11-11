@@ -56,7 +56,7 @@
         <!-- 系统模块-->
         <dependency>
             <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-system</artifactId>
+            <artifactId>ruoyi-common</artifactId>
         </dependency>
 
     </dependencies>

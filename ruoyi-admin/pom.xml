@@ -39,7 +39,7 @@
         <!-- 核心模块-->
         <dependency>
             <groupId>com.ruoyi</groupId>
-            <artifactId>ruoyi-framework</artifactId>
+            <artifactId>ruoyi-system</artifactId>
         </dependency>
 
         <!-- 定时任务-->

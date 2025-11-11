@@ -28,6 +28,9 @@ import reactor.core.publisher.Mono;
 public class LogoutSuccessHandlerImpl implements ServerLogoutSuccessHandler {
 
     @Resource
+    private AsyncFactory AsyncFactory;
+
+    @Resource
     private ObjectMapper objectMapper;
 
     @Resource

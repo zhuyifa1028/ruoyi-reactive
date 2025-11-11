@@ -4,9 +4,9 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.model.RegisterBody;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.web.service.SysRegisterService;
 import com.ruoyi.system.service.ISysConfigService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ruoyi.system.service.impl.SysRegisterService;
+import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,10 +19,11 @@ import org.springframework.web.server.ServerWebExchange;
  */
 @RestController
 public class SysRegisterController extends BaseController {
-    @Autowired
+
+    @Resource
     private SysRegisterService registerService;
 
-    @Autowired
+    @Resource
     private ISysConfigService configService;
 
     @PostMapping("/register")

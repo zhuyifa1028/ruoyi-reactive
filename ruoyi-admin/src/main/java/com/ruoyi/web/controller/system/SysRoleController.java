@@ -11,14 +11,14 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.domain.SysUserRole;
 import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.impl.SysPermissionService;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -33,19 +33,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/system/role")
 public class SysRoleController extends BaseController {
-    @Autowired
+
+    @Resource
     private ISysRoleService roleService;
 
-    @Autowired
+    @Resource
     private TokenService tokenService;
 
-    @Autowired
+    @Resource
     private SysPermissionService permissionService;
 
-    @Autowired
+    @Resource
     private ISysUserService userService;
 
-    @Autowired
+    @Resource
     private ISysDeptService deptService;
 
     @PreAuthorize("@ss.hasPermi('system:role:list')")
@@ -61,7 +62,7 @@ public class SysRoleController extends BaseController {
     @PostMapping("/export")
     public void export(HttpServletResponse response, SysRole role) {
         List<SysRole> list = roleService.selectRoleList(role);
-        ExcelUtil<SysRole> util = new ExcelUtil<SysRole>(SysRole.class);
+        ExcelUtil<SysRole> util = new ExcelUtil<>(SysRole.class);
         util.exportExcel(response, list, "角色数据");
     }
 

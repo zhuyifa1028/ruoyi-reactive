@@ -1,4 +1,4 @@
-package com.ruoyi.framework.web.service;
+package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.constant.Constants;
@@ -16,7 +16,7 @@ import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -27,13 +27,17 @@ import org.springframework.web.server.ServerWebExchange;
  */
 @Component
 public class SysRegisterService {
-    @Autowired
+
+    @Resource
+    private AsyncFactory AsyncFactory;
+
+    @Resource
     private ISysUserService userService;
 
-    @Autowired
+    @Resource
     private ISysConfigService configService;
 
-    @Autowired
+    @Resource
     private RedisCache redisCache;
 
     /**

@@ -1,4 +1,4 @@
-package com.ruoyi.framework.web.service;
+package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.constant.Constants;
@@ -14,10 +14,10 @@ import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.framework.security.context.AuthenticationContextHolder;
+import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysUserService;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,19 +32,23 @@ import reactor.core.publisher.Mono;
  */
 @Component
 public class SysLoginService {
-    @Autowired
+
+    @Resource
+    private AsyncFactory AsyncFactory;
+
+    @Resource
     private TokenService tokenService;
 
     @Resource
     private ReactiveAuthenticationManager authenticationManager;
 
-    @Autowired
+    @Resource
     private RedisCache redisCache;
 
-    @Autowired
+    @Resource
     private ISysUserService userService;
 
-    @Autowired
+    @Resource
     private ISysConfigService configService;
 
     /**

@@ -9,12 +9,12 @@ import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.web.service.SysLoginService;
-import com.ruoyi.framework.web.service.SysPermissionService;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.ISysConfigService;
 import com.ruoyi.system.service.ISysMenuService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ruoyi.system.service.impl.SysLoginService;
+import com.ruoyi.system.service.impl.SysPermissionService;
+import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,19 +33,20 @@ import java.util.Set;
  */
 @RestController
 public class SysLoginController {
-    @Autowired
+
+    @Resource
     private SysLoginService loginService;
 
-    @Autowired
+    @Resource
     private ISysMenuService menuService;
 
-    @Autowired
+    @Resource
     private SysPermissionService permissionService;
 
-    @Autowired
+    @Resource
     private TokenService tokenService;
 
-    @Autowired
+    @Resource
     private ISysConfigService configService;
 
     /**
