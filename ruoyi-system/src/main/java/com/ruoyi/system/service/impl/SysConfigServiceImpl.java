@@ -9,6 +9,7 @@ import com.ruoyi.system.converter.SysConfigConverter;
 import com.ruoyi.system.domain.SysConfig;
 import com.ruoyi.system.dto.SysConfigDTO;
 import com.ruoyi.system.mapper.SysConfigMapper;
+import com.ruoyi.system.query.SysConfigQuery;
 import com.ruoyi.system.repository.SysConfigRepository;
 import com.ruoyi.system.service.SysConfigService;
 import com.ruoyi.system.vo.SysConfigVO;
@@ -17,6 +18,8 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.support.ReactivePageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -54,8 +57,15 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
      * 获取配置列表
      */
     @Override
-    public List<SysConfig> selectConfigList(SysConfig config) {
-        return configMapper.selectConfigList(config);
+    public Mono<Page<SysConfigVO>> selectConfigList(SysConfigQuery query) {
+        return sysConfigRepository.selectConfigList(query)
+                .map(sysConfigConverter::toSysConfigVO)
+                .collectList()
+                .flatMap(list -> {
+                    Mono<Long> count = sysConfigRepository.selectConfigCount(query);
+                    return ReactivePageableExecutionUtils.getPage(list, query.pageable(), count);
+                })
+                .defaultIfEmpty(Page.empty(query.pageable()));
     }
 
     /**

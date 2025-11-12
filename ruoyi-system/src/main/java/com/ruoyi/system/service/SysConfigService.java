@@ -1,8 +1,9 @@
 package com.ruoyi.system.service;
 
-import com.ruoyi.system.domain.SysConfig;
 import com.ruoyi.system.dto.SysConfigDTO;
+import com.ruoyi.system.query.SysConfigQuery;
 import com.ruoyi.system.vo.SysConfigVO;
+import org.springframework.data.domain.Page;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public interface SysConfigService {
     /**
      * 获取配置列表
      */
-    List<SysConfig> selectConfigList(SysConfig config);
+    Mono<Page<SysConfigVO>> selectConfigList(SysConfigQuery query);
 
     /**
      * 根据配置编号获取详细信息

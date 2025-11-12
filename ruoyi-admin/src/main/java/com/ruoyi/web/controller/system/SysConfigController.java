@@ -1,15 +1,13 @@
 package com.ruoyi.web.controller.system;
 
-import com.github.pagehelper.PageHelper;
 import com.ruoyi.common.annotation.Log;
+import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.page.PageDomain;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.sql.SqlUtil;
-import com.ruoyi.system.domain.SysConfig;
 import com.ruoyi.system.dto.SysConfigDTO;
+import com.ruoyi.system.query.SysConfigQuery;
 import com.ruoyi.system.service.SysConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,15 +30,16 @@ public class SysConfigController extends BaseController {
     @Operation(summary = "获取配置列表")
     @PreAuthorize("@ss.hasPermi('system:config:list')")
     @GetMapping("/list")
-    public TableDataInfo list(SysConfig config, PageDomain pageDomain) {
-        Integer pageNum = pageDomain.getPageNum();
-        Integer pageSize = pageDomain.getPageSize();
-        String orderBy = SqlUtil.escapeOrderBySql(pageDomain.getOrderBy());
-        Boolean reasonable = pageDomain.getReasonable();
-        PageHelper.startPage(pageNum, pageSize, orderBy).setReasonable(reasonable);
-
-        List<SysConfig> list = sysConfigService.selectConfigList(config);
-        return getDataTable(list);
+    public Mono<TableDataInfo> list(SysConfigQuery query) {
+        return sysConfigService.selectConfigList(query)
+                .flatMap(page -> {
+                    TableDataInfo info = new TableDataInfo();
+                    info.setCode(HttpStatus.SUCCESS);
+                    info.setMsg("查询成功");
+                    info.setRows(page.getContent());
+                    info.setTotal(page.getTotalElements());
+                    return Mono.just(info);
+                });
     }
 
     @Operation(summary = "根据配置编号获取详细信息")

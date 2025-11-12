@@ -189,7 +189,7 @@
 </template>
 
 <script>
-import {listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache} from "@/api/system/config"
+import {addConfig, delConfig, getConfig, listConfig, refreshCache, updateConfig} from "@/api/system/config"
 
 export default {
   name: "Config",
@@ -248,8 +248,9 @@ export default {
     getList() {
       this.loading = true
       listConfig(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-          this.configList = response.rows
-          this.total = response.total
+        const {rows, total} = response
+        this.configList = rows
+        this.total = total
           this.loading = false
         }
       )

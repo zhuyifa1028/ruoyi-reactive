@@ -32,4 +32,42 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <!-- 编译时生成 Q 类 -->
+            <plugin>
+                <groupId>io.github.openfeign.querydsl</groupId>
+                <artifactId>querydsl-maven-plugin</artifactId>
+                <version>7.1</version>
+                <configuration>
+                    <jdbcDriver>com.mysql.cj.jdbc.Driver</jdbcDriver>
+                    <jdbcUrl>jdbc:mysql://localhost:3306/ry-vue</jdbcUrl>
+                    <jdbcUser>root</jdbcUser>
+                    <jdbcPassword>password</jdbcPassword>
+                    <catalogPattern>ry-vue</catalogPattern>
+                    <tableNamePattern>sys%</tableNamePattern>
+                    <customTypes>
+                        <customType>com.querydsl.sql.types.LocalDateTimeType</customType>
+                        <customType>com.querydsl.sql.types.LocalDateType</customType>
+                    </customTypes>
+                    <packageName>com.ruoyi.system.entity.querydsl</packageName>
+                    <targetFolder>${project.basedir}/target/generated-sources/annotations</targetFolder>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.mysql</groupId>
+                        <artifactId>mysql-connector-j</artifactId>
+                        <version>${mysql.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>export</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

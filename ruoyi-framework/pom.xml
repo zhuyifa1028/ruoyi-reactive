@@ -76,6 +76,13 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- QueryDSL -->
+        <dependency>
+            <groupId>io.github.openfeign.querydsl</groupId>
+            <artifactId>querydsl-r2dbc</artifactId>
+            <version>7.1</version>
+        </dependency>
+
     </dependencies>
 
 </project>
