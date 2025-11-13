@@ -13,9 +13,9 @@ import com.ruoyi.system.domain.SysPost;
 import com.ruoyi.system.domain.SysUserPost;
 import com.ruoyi.system.domain.SysUserRole;
 import com.ruoyi.system.mapper.*;
-import com.ruoyi.system.service.ISysDeptService;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysConfigService;
+import com.ruoyi.system.service.SysDeptService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -57,7 +57,7 @@ public class SysUserServiceImpl implements ISysUserService {
     private SysConfigService configService;
 
     @Resource
-    private ISysDeptService deptService;
+    private SysDeptService deptService;
 
     @Resource
     protected Validator validator;

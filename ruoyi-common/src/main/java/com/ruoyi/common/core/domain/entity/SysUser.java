@@ -9,6 +9,7 @@ import com.ruoyi.common.xss.Xss;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -20,8 +21,8 @@ import java.util.List;
  *
  * @author ruoyi
  */
+@Data
 public class SysUser extends BaseEntity {
-    private static final long serialVersionUID = 1L;
 
     /**
      * 用户ID
@@ -39,24 +40,32 @@ public class SysUser extends BaseEntity {
      * 用户账号
      */
     @Excel(name = "登录名称")
+    @Xss(message = "用户账号不能包含脚本字符")
+    @NotBlank(message = "用户账号不能为空")
+    @Size(max = 30, message = "用户账号长度不能超过30个字符")
     private String userName;
 
     /**
      * 用户昵称
      */
     @Excel(name = "用户名称")
+    @Xss(message = "用户昵称不能包含脚本字符")
+    @Size(max = 30, message = "用户昵称长度不能超过30个字符")
     private String nickName;
 
     /**
      * 用户邮箱
      */
     @Excel(name = "用户邮箱")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 50, message = "邮箱长度不能超过50个字符")
     private String email;
 
     /**
      * 手机号码
      */
     @Excel(name = "手机号码", cellType = ColumnType.TEXT)
+    @Size(max = 11, message = "手机号码长度不能超过11个字符")
     private String phonenumber;
 
     /**
@@ -140,14 +149,6 @@ public class SysUser extends BaseEntity {
         this.userId = userId;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
     public boolean isAdmin() {
         return isAdmin(this.userId);
     }
@@ -156,156 +157,8 @@ public class SysUser extends BaseEntity {
         return userId != null && 1L == userId;
     }
 
-    public Long getDeptId() {
-        return deptId;
-    }
-
-    public void setDeptId(Long deptId) {
-        this.deptId = deptId;
-    }
-
-    @Xss(message = "用户昵称不能包含脚本字符")
-    @Size(min = 0, max = 30, message = "用户昵称长度不能超过30个字符")
-    public String getNickName() {
-        return nickName;
-    }
-
-    public void setNickName(String nickName) {
-        this.nickName = nickName;
-    }
-
-    @Xss(message = "用户账号不能包含脚本字符")
-    @NotBlank(message = "用户账号不能为空")
-    @Size(min = 0, max = 30, message = "用户账号长度不能超过30个字符")
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    @Email(message = "邮箱格式不正确")
-    @Size(min = 0, max = 50, message = "邮箱长度不能超过50个字符")
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    @Size(min = 0, max = 11, message = "手机号码长度不能超过11个字符")
-    public String getPhonenumber() {
-        return phonenumber;
-    }
-
-    public void setPhonenumber(String phonenumber) {
-        this.phonenumber = phonenumber;
-    }
-
-    public String getSex() {
-        return sex;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getDelFlag() {
-        return delFlag;
-    }
-
-    public void setDelFlag(String delFlag) {
-        this.delFlag = delFlag;
-    }
-
-    public String getLoginIp() {
-        return loginIp;
-    }
-
-    public void setLoginIp(String loginIp) {
-        this.loginIp = loginIp;
-    }
-
-    public Date getLoginDate() {
-        return loginDate;
-    }
-
-    public void setLoginDate(Date loginDate) {
-        this.loginDate = loginDate;
-    }
-
-    public Date getPwdUpdateDate() {
-        return pwdUpdateDate;
-    }
-
-    public void setPwdUpdateDate(Date pwdUpdateDate) {
-        this.pwdUpdateDate = pwdUpdateDate;
-    }
-
-    public SysDept getDept() {
-        return dept;
-    }
-
-    public void setDept(SysDept dept) {
-        this.dept = dept;
-    }
-
-    public List<SysRole> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<SysRole> roles) {
-        this.roles = roles;
-    }
-
-    public Long[] getRoleIds() {
-        return roleIds;
-    }
-
-    public void setRoleIds(Long[] roleIds) {
-        this.roleIds = roleIds;
-    }
-
-    public Long[] getPostIds() {
-        return postIds;
-    }
-
-    public void setPostIds(Long[] postIds) {
-        this.postIds = postIds;
-    }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
-    public void setRoleId(Long roleId) {
-        this.roleId = roleId;
+    public static boolean isNotAdmin(Long userId) {
+        return !isAdmin(userId);
     }
 
     @Override

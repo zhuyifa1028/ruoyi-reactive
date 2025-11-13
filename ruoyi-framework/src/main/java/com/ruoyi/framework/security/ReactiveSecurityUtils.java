@@ -24,7 +24,7 @@ public class ReactiveSecurityUtils {
 
     /**
      * 获取用户
-     **/
+     */
     public static Mono<LoginUser> getLoginUser() {
         return getAuthentication()
                 .map(Authentication::getPrincipal)
@@ -33,10 +33,18 @@ public class ReactiveSecurityUtils {
 
     /**
      * 获取用户账户
-     **/
+     */
     public static Mono<String> getUsername() {
         return getLoginUser()
                 .map(LoginUser::getUsername);
+    }
+
+    /**
+     * 获取用户ID
+     */
+    public static Mono<Long> getUserId() {
+        return getLoginUser()
+                .map(LoginUser::getUserId);
     }
 
 }

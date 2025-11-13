@@ -38,9 +38,5 @@ public class BaseEntity implements Serializable {
      */
     @LastModifiedDate
     private LocalDateTime updateTime;
-    /**
-     * 备注
-     */
-    private String remark;
 
 }

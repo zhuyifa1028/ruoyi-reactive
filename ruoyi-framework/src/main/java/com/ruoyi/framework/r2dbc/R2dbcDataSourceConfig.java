@@ -1,8 +1,8 @@
 package com.ruoyi.framework.r2dbc;
 
+import com.querydsl.r2dbc.MySQLTemplates;
 import com.querydsl.r2dbc.R2DBCConnectionProvider;
 import com.querydsl.r2dbc.R2DBCQueryFactory;
-import com.querydsl.r2dbc.SQLTemplates;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
@@ -43,7 +43,7 @@ public class R2dbcDataSourceConfig implements ReactiveAuditorAware<String> {
 
     @Bean
     public R2DBCQueryFactory queryFactory(R2DBCConnectionProvider provider) {
-        return new R2DBCQueryFactory(SQLTemplates.DEFAULT, provider);
+        return new R2DBCQueryFactory(new MySQLTemplates(false), provider);
     }
 
     @Bean

@@ -76,6 +76,7 @@
     <!-- Spring日志级别控制  -->
     <logger name="org.springframework" level="warn"/>
     <logger name="org.springframework.r2dbc" level="DEBUG"/>
+    <logger name="com.querydsl.r2dbc.sql" level="DEBUG"/>
 
     <root level="info">
         <appender-ref ref="console"/>
