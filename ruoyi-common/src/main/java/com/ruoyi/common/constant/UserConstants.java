@@ -5,6 +5,7 @@ package com.ruoyi.common.constant;
  *
  * @author ruoyi
  */
+@SuppressWarnings("unused")
 public class UserConstants {
     /**
      * 平台内系统用户的唯一标志
@@ -59,7 +60,7 @@ public class UserConstants {
     /**
      * 是否菜单外链（是）
      */
-    public static final String YES_FRAME = "0";
+    public static final Integer YES_FRAME = 0;
 
     /**
      * 是否菜单外链（否）

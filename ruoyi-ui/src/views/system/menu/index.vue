@@ -190,8 +190,8 @@
                 是否外链
               </span>
               <el-radio-group v-model="form.isFrame">
-                <el-radio label="0">是</el-radio>
-                <el-radio label="1">否</el-radio>
+                <el-radio :label="0">是</el-radio>
+                <el-radio :label="1">否</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -252,8 +252,8 @@
                 是否缓存
               </span>
               <el-radio-group v-model="form.isCache">
-                <el-radio label="0">缓存</el-radio>
-                <el-radio label="1">不缓存</el-radio>
+                <el-radio :label="0">缓存</el-radio>
+                <el-radio :label="1">不缓存</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -306,7 +306,7 @@
 </template>
 
 <script>
-import {listMenu, getMenu, delMenu, addMenu, updateMenu} from "@/api/system/menu"
+import {addMenu, delMenu, getMenu, listMenu, updateMenu} from "@/api/system/menu"
 import Treeselect from "@riophae/vue-treeselect"
 import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 import IconSelect from "@/components/IconSelect"
