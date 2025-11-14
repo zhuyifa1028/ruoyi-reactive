@@ -1,18 +1,18 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="字典名称" prop="dictName">
+      <el-form-item label="字典名称" prop="dictLabel">
         <el-input
-          v-model="queryParams.dictName"
+          v-model="queryParams.dictLabel"
           placeholder="请输入字典名称"
           clearable
           style="width: 240px"
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="字典类型" prop="dictType">
+      <el-form-item label="字典类型" prop="dictValue">
         <el-input
-          v-model="queryParams.dictType"
+          v-model="queryParams.dictValue"
           placeholder="请输入字典类型"
           clearable
           style="width: 240px"
@@ -114,12 +114,12 @@
 
     <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="字典编号" align="center" prop="dictId"/>
-      <el-table-column label="字典名称" align="center" prop="dictName" :show-overflow-tooltip="true"/>
+      <el-table-column label="字典编号" align="center" prop="dictCode"/>
+      <el-table-column label="字典名称" align="center" prop="dictLabel" :show-overflow-tooltip="true"/>
       <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
         <template slot-scope="scope">
-          <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
-            <span>{{ scope.row.dictType }}</span>
+          <router-link :to="'/system/dict-data/index/' + scope.row.dictCode" class="link-type">
+            <span>{{ scope.row.dictValue }}</span>
           </router-link>
         </template>
       </el-table-column>
@@ -167,11 +167,11 @@
     <!-- 添加或修改参数配置对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="form.dictName" placeholder="请输入字典名称"/>
+        <el-form-item label="字典名称" prop="dictLabel">
+          <el-input v-model="form.dictLabel" placeholder="请输入字典名称"/>
         </el-form-item>
-        <el-form-item label="字典类型" prop="dictType">
-          <el-input v-model="form.dictType" placeholder="请输入字典类型"/>
+        <el-form-item label="字典类型" prop="dictValue">
+          <el-input v-model="form.dictValue" placeholder="请输入字典类型"/>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -196,7 +196,7 @@
 </template>
 
 <script>
-import {listType, getType, delType, addType, updateType, refreshCache} from "@/api/system/dict/type"
+import {addType, delType, getType, listType, refreshCache, updateType} from "@/api/system/dict/type"
 
 export default {
   name: "Dict",
@@ -227,18 +227,19 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        dictName: undefined,
-        dictType: undefined,
+        dictType: 'sys_dict_type',
+        dictLabel: undefined,
+        dictValue: undefined,
         status: undefined
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
-        dictName: [
+        dictLabel: [
           {required: true, message: "字典名称不能为空", trigger: "blur"}
         ],
-        dictType: [
+        dictValue: [
           {required: true, message: "字典类型不能为空", trigger: "blur"}
         ]
       }
@@ -266,9 +267,10 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        dictId: undefined,
-        dictName: undefined,
-        dictType: undefined,
+        dictCode: undefined,
+        dictType: 'sys_dict_type',
+        dictLabel: undefined,
+        dictValue: undefined,
         status: "0",
         remark: undefined
       }
@@ -293,15 +295,15 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.dictId)
-      this.single = selection.length != 1
+      this.ids = selection.map(item => item.dictCode)
+      this.single = selection.length !== 1
       this.multiple = !selection.length
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset()
-      const dictId = row.dictId || this.ids
-      getType(dictId).then(response => {
+      const dictCode = row.dictCode || this.ids
+      getType(dictCode).then(response => {
         this.form = response.data
         this.open = true
         this.title = "修改字典类型"
@@ -311,7 +313,7 @@ export default {
     submitForm: function () {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.dictId != undefined) {
+          if (this.form.dictCode !== undefined) {
             updateType(this.form).then(response => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
@@ -329,9 +331,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const dictIds = row.dictId || this.ids
-      this.$modal.confirm('是否确认删除字典编号为"' + dictIds + '"的数据项？').then(function () {
-        return delType(dictIds)
+      const dictCodes = row.dictCode || this.ids
+      this.$modal.confirm('是否确认删除字典编号为"' + dictCodes + '"的数据项？').then(function () {
+        return delType(dictCodes)
       }).then(() => {
         this.getList()
         this.$modal.msgSuccess("删除成功")

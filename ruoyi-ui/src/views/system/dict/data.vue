@@ -6,8 +6,8 @@
           <el-option
             v-for="item in typeOptions"
             :key="item.dictId"
-            :label="item.dictName"
-            :value="item.dictType"
+            :label="item.dictLabel"
+            :value="item.dictValue"
           />
         </el-select>
       </el-form-item>
@@ -198,8 +198,8 @@
 </template>
 
 <script>
-import {listData, getData, delData, addData, updateData} from "@/api/system/dict/data"
-import {optionselect as getDictOptionselect, getType} from "@/api/system/dict/type"
+import {addData, delData, getData, listData, updateData} from "@/api/system/dict/data"
+import {getType, optionselect as getDictOptionselect} from "@/api/system/dict/type"
 
 export default {
   name: "Data",
@@ -288,8 +288,8 @@ export default {
     /** 查询字典类型详细 */
     getType(dictId) {
       getType(dictId).then(response => {
-        this.queryParams.dictType = response.data.dictType
-        this.defaultDictType = response.data.dictType
+        this.queryParams.dictType = response.data.dictValue
+        this.defaultDictType = response.data.dictValue
         this.getList()
       })
     },
