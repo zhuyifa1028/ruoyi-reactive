@@ -9,7 +9,7 @@ import org.springframework.data.relational.core.mapping.Table;
  * 菜单表
  *
  * @author bugout
- * @version 2025-11-13
+ * @version 2025-11-14
  */
 @Table("sys_menu")
 @Data

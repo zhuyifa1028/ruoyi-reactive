@@ -1,86 +1,90 @@
 package com.ruoyi.system.service.impl;
 
+import com.ruoyi.common.exception.ServiceException;
+import com.ruoyi.system.converter.SysNoticeConverter;
+import com.ruoyi.system.dto.SysNoticeDTO;
+import com.ruoyi.system.entity.SysNotice;
+import com.ruoyi.system.query.SysNoticeQuery;
+import com.ruoyi.system.repository.SysNoticeRepository;
+import com.ruoyi.system.service.SysNoticeService;
+import com.ruoyi.system.vo.SysNoticeVO;
+import jakarta.annotation.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.support.ReactivePageableExecutionUtils;
+import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import com.ruoyi.system.domain.SysNotice;
-import com.ruoyi.system.mapper.SysNoticeMapper;
-import com.ruoyi.system.service.ISysNoticeService;
-
 /**
- * 公告 服务层实现
+ * 通告表 业务实现
  *
- * @author ruoyi
+ * @author bugout
+ * @version 2025-11-14
  */
 @Service
-public class SysNoticeServiceImpl implements ISysNoticeService {
-    @Autowired
-    private SysNoticeMapper noticeMapper;
+public class SysNoticeServiceImpl implements SysNoticeService {
+
+    @Resource
+    private SysNoticeConverter sysNoticeConverter;
+    @Resource
+    private SysNoticeRepository sysNoticeRepository;
 
     /**
-     * 查询公告信息
-     *
-     * @param noticeId 公告ID
-     * @return 公告信息
+     * 查询通告列表
      */
     @Override
-    public SysNotice selectNoticeById(Long noticeId) {
-        return noticeMapper.selectNoticeById(noticeId);
+    public Mono<Page<SysNoticeVO>> selectNoticeList(SysNoticeQuery query) {
+        return sysNoticeRepository.selectNoticeList(query)
+                .map(sysNoticeConverter::toSysNoticeVO)
+                .collectList()
+                .flatMap(list -> {
+                    Mono<Long> count = sysNoticeRepository.selectNoticeCount(query);
+                    return ReactivePageableExecutionUtils.getPage(list, query.pageable(), count);
+                })
+                .defaultIfEmpty(Page.empty(query.pageable()));
     }
 
     /**
-     * 查询公告列表
-     *
-     * @param notice 公告信息
-     * @return 公告集合
+     * 根据通告ID查询信息
      */
     @Override
-    public List<SysNotice> selectNoticeList(SysNotice notice) {
-        return noticeMapper.selectNoticeList(notice);
+    public Mono<SysNoticeVO> selectNoticeById(Long noticeId) {
+        return sysNoticeRepository.findById(noticeId)
+                .switchIfEmpty(Mono.error(new ServiceException("通告不存在")))
+                .map(sysNoticeConverter::toSysNoticeVO);
     }
 
     /**
-     * 新增公告
-     *
-     * @param notice 公告信息
-     * @return 结果
+     * 新增通告
      */
     @Override
-    public int insertNotice(SysNotice notice) {
-        return noticeMapper.insertNotice(notice);
+    public Mono<Void> insertNotice(SysNoticeDTO dto) {
+        SysNotice notice = sysNoticeConverter.toSysNotice(dto);
+        return sysNoticeRepository.save(notice)
+                .then();
     }
 
     /**
-     * 修改公告
-     *
-     * @param notice 公告信息
-     * @return 结果
+     * 修改通告
      */
     @Override
-    public int updateNotice(SysNotice notice) {
-        return noticeMapper.updateNotice(notice);
+    public Mono<Void> updateNotice(SysNoticeDTO dto) {
+        return sysNoticeRepository.findById(dto.getNoticeId())
+                .switchIfEmpty(Mono.error(new ServiceException("通告不存在")))
+                .flatMap(notice -> {
+                    sysNoticeConverter.copyProperties(dto, notice);
+                    return sysNoticeRepository.save(notice);
+                })
+                .then();
     }
 
     /**
-     * 删除公告对象
-     *
-     * @param noticeId 公告ID
-     * @return 结果
+     * 批量删除通告
      */
     @Override
-    public int deleteNoticeById(Long noticeId) {
-        return noticeMapper.deleteNoticeById(noticeId);
+    public Mono<Void> deleteNoticeByIds(List<Long> noticeIds) {
+        return sysNoticeRepository.deleteAllById(noticeIds);
     }
 
-    /**
-     * 批量删除公告信息
-     *
-     * @param noticeIds 需要删除的公告ID
-     * @return 结果
-     */
-    @Override
-    public int deleteNoticeByIds(Long[] noticeIds) {
-        return noticeMapper.deleteNoticeByIds(noticeIds);
-    }
 }

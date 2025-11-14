@@ -6,7 +6,6 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import com.ruoyi.system.converter.SysConfigConverter;
-import com.ruoyi.system.domain.SysConfig;
 import com.ruoyi.system.dto.SysConfigDTO;
 import com.ruoyi.system.mapper.SysConfigMapper;
 import com.ruoyi.system.query.SysConfigQuery;
@@ -102,10 +101,10 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
      */
     @Override
     public boolean selectCaptchaEnabled() {
-        SysConfig retConfig = configMapper.checkConfigKeyUnique("sys.account.captchaEnabled");
-        if (StringUtils.isNotNull(retConfig)) {
+        String configValue = configMapper.selectConfigByKey("sys.account.captchaEnabled");
+        if (StringUtils.isNotNull(configValue)) {
 
-            return BooleanUtils.toBoolean(retConfig.getConfigValue());
+            return BooleanUtils.toBoolean(configValue);
         }
         return false;
     }
