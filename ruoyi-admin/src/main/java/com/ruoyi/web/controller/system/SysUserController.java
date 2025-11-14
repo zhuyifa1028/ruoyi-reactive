@@ -11,10 +11,10 @@ import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.system.service.ISysPostService;
 import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysDeptService;
+import com.ruoyi.system.service.SysPostService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.ArrayUtils;
@@ -45,7 +45,7 @@ public class SysUserController extends BaseController {
     private SysDeptService deptService;
 
     @Resource
-    private ISysPostService postService;
+    private SysPostService postService;
 
     /**
      * 获取用户列表
