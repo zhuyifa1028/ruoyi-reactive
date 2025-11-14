@@ -3,18 +3,22 @@ package com.ruoyi.web.controller.system;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.entity.SysDept;
+import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.common.utils.TreeselectUtils;
 import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.system.service.ISysRoleService;
+import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysDeptService;
 import com.ruoyi.system.service.SysPostService;
+import com.ruoyi.system.service.SysRoleService;
+import com.ruoyi.system.vo.SysDeptVO;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.ArrayUtils;
@@ -22,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,7 +44,7 @@ public class SysUserController extends BaseController {
     private ISysUserService userService;
 
     @Resource
-    private ISysRoleService roleService;
+    private SysRoleService roleService;
 
     @Resource
     private SysDeptService deptService;
@@ -98,7 +103,7 @@ public class SysUserController extends BaseController {
             ajax.put("postIds", postService.selectPostListByUserId(userId));
             ajax.put("roleIds", sysUser.getRoles().stream().map(SysRole::getRoleId).collect(Collectors.toList()));
         }
-        List<SysRole> roles = roleService.selectRoleAll();
+        List<SysRole> roles = roleService.selectRoleList(new SysRole());
         ajax.put("roles", SysUser.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
         ajax.put("posts", postService.selectPostAll());
         return ajax;
@@ -214,12 +219,15 @@ public class SysUserController extends BaseController {
         return success();
     }
 
-    /**
-     * 获取部门树列表
-     */
+    @Operation(summary = "获取部门下拉树列表")
     @PreAuthorize("@ss.hasPermi('system:user:list')")
     @GetMapping("/deptTree")
-    public AjaxResult deptTree(SysDept dept) {
-        return success(deptService.selectDeptTreeList(dept));
+    public Mono<R<List<SysDeptVO>>> deptTree(SysDeptQuery query) {
+        return deptService.selectDeptList(query)
+                .collectList()
+                .map(list -> {
+                    // 将扁平列表转换为树形结构
+                    return R.ok(TreeselectUtils.build(list, SysDeptVO::getDeptId, SysDeptVO::getParentId, SysDeptVO::setChildren));
+                });
     }
 }

@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "SysDeptVO")
 @Data
@@ -36,5 +37,8 @@ public class SysDeptVO implements Serializable {
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "下级部门")
+    private List<SysDeptVO> children;
 
 }

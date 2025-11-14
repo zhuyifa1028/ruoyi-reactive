@@ -2,9 +2,7 @@ package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.annotation.DataScope;
 import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysDept;
-import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
@@ -12,11 +10,12 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.system.converter.SysDeptConverter;
+import com.ruoyi.system.domain.SysRoleDept;
 import com.ruoyi.system.dto.SysDeptDTO;
 import com.ruoyi.system.mapper.SysDeptMapper;
-import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.repository.SysDeptRepository;
+import com.ruoyi.system.repository.SysRoleDeptRepository;
 import com.ruoyi.system.service.SysDeptService;
 import com.ruoyi.system.vo.SysDeptVO;
 import jakarta.annotation.Resource;
@@ -27,11 +26,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 部门管理 服务实现
@@ -47,10 +44,10 @@ public class SysDeptServiceImpl implements SysDeptService {
     private SysDeptRepository sysDeptRepository;
 
     @Resource
-    private SysDeptMapper deptMapper;
+    private SysRoleDeptRepository sysRoleDeptRepository;
 
     @Resource
-    private SysRoleMapper roleMapper;
+    private SysDeptMapper deptMapper;
 
     /**
      * 查询部门列表
@@ -180,6 +177,25 @@ public class SysDeptServiceImpl implements SysDeptService {
     }
 
     /**
+     * 校验部门是否有数据权限
+     */
+    private Mono<Void> checkDeptAuthority(Long deptId) {
+        return ReactiveSecurityUtils.getUserId()
+                .filter(SysUser::isNotAdmin)
+                .flatMap(userId -> {
+                    if (SysUser.isNotAdmin(userId)) {
+                        SysDept dept = new SysDept();
+                        dept.setDeptId(deptId);
+                        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
+                        if (StringUtils.isEmpty(depts)) {
+                            return Mono.error(new ServiceException("没有权限访问部门数据！"));
+                        }
+                    }
+                    return Mono.empty();
+                });
+    }
+
+    /**
      * 删除部门
      */
     @Override
@@ -202,22 +218,6 @@ public class SysDeptServiceImpl implements SysDeptService {
                 .then(sysDeptRepository.deleteByDeptId(deptId));
     }
 
-    private Mono<Void> checkDeptAuthority(Long deptId) {
-        return ReactiveSecurityUtils.getUserId()
-                .filter(SysUser::isNotAdmin)
-                .flatMap(userId -> {
-                    if (SysUser.isNotAdmin(userId)) {
-                        SysDept dept = new SysDept();
-                        dept.setDeptId(deptId);
-                        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
-                        if (StringUtils.isEmpty(depts)) {
-                            return Mono.error(new ServiceException("没有权限访问部门数据！"));
-                        }
-                    }
-                    return Mono.empty();
-                });
-    }
-
     @DataScope(deptAlias = "d")
     @Override
     public List<SysDept> selectDeptList(SysDept dept) {
@@ -225,62 +225,12 @@ public class SysDeptServiceImpl implements SysDeptService {
     }
 
     /**
-     * 查询部门树结构信息
-     *
-     * @param dept 部门信息
-     * @return 部门树信息集合
+     * 根据角色ID查询选中部门列表
      */
     @Override
-    public List<TreeSelect> selectDeptTreeList(SysDept dept) {
-        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
-        return buildDeptTreeSelect(depts);
-    }
-
-    /**
-     * 构建前端所需要树结构
-     *
-     * @param depts 部门列表
-     * @return 树结构列表
-     */
-    @Override
-    public List<SysDept> buildDeptTree(List<SysDept> depts) {
-        List<SysDept> returnList = new ArrayList<>();
-        List<Long> tempList = depts.stream().map(SysDept::getDeptId).toList();
-        for (SysDept dept : depts) {
-            // 如果是顶级节点, 遍历该父节点的所有子节点
-            if (!tempList.contains(dept.getParentId())) {
-                recursionFn(depts, dept);
-                returnList.add(dept);
-            }
-        }
-        if (returnList.isEmpty()) {
-            returnList = depts;
-        }
-        return returnList;
-    }
-
-    /**
-     * 构建前端所需要下拉树结构
-     *
-     * @param depts 部门列表
-     * @return 下拉树结构列表
-     */
-    @Override
-    public List<TreeSelect> buildDeptTreeSelect(List<SysDept> depts) {
-        List<SysDept> deptTrees = buildDeptTree(depts);
-        return deptTrees.stream().map(TreeSelect::new).collect(Collectors.toList());
-    }
-
-    /**
-     * 根据角色ID查询部门树信息
-     *
-     * @param roleId 角色ID
-     * @return 选中部门列表
-     */
-    @Override
-    public List<Long> selectDeptListByRoleId(Long roleId) {
-        SysRole role = roleMapper.selectRoleById(roleId);
-        return deptMapper.selectDeptListByRoleId(roleId, role.isDeptCheckStrictly());
+    public Flux<Long> selectDeptListByRoleId(Long roleId) {
+        return sysRoleDeptRepository.findAllByRoleId(roleId)
+                .map(SysRoleDept::getDeptId);
     }
 
     /**
@@ -298,40 +248,6 @@ public class SysDeptServiceImpl implements SysDeptService {
                 throw new ServiceException("没有权限访问部门数据！");
             }
         }
-    }
-
-    /**
-     * 递归列表
-     */
-    private void recursionFn(List<SysDept> list, SysDept t) {
-        // 得到子节点列表
-        List<SysDept> childList = getChildList(list, t);
-        t.setChildren(childList);
-        for (SysDept tChild : childList) {
-            if (hasChild(list, tChild)) {
-                recursionFn(list, tChild);
-            }
-        }
-    }
-
-    /**
-     * 得到子节点列表
-     */
-    private List<SysDept> getChildList(List<SysDept> list, SysDept t) {
-        List<SysDept> tlist = new ArrayList<>();
-        for (SysDept n : list) {
-            if (StringUtils.isNotNull(n.getParentId()) && n.getParentId().longValue() == t.getDeptId().longValue()) {
-                tlist.add(n);
-            }
-        }
-        return tlist;
-    }
-
-    /**
-     * 判断是否有子节点
-     */
-    private boolean hasChild(List<SysDept> list, SysDept t) {
-        return !getChildList(list, t).isEmpty();
     }
 
 }

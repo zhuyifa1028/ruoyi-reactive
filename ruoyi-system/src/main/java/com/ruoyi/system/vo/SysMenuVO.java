@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Schema(description = "SysMenuVO")
 @Data
@@ -59,5 +60,8 @@ public class SysMenuVO implements Serializable {
 
     @Schema(description = "备注")
     private String remark;
+
+    @Schema(description = "下级菜单")
+    private List<SysMenuVO> children;
 
 }

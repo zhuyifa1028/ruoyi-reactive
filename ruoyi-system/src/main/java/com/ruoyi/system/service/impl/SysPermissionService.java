@@ -4,8 +4,8 @@ import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.service.ISysRoleService;
 import com.ruoyi.system.service.SysMenuService;
+import com.ruoyi.system.service.SysRoleService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class SysPermissionService {
 
     @Resource
-    private ISysRoleService roleService;
+    private SysRoleService roleService;
 
     @Resource
     private SysMenuService menuService;

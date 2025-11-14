@@ -1,6 +1,5 @@
 package com.ruoyi.system.service;
 
-import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.system.domain.vo.RouterVo;
 import com.ruoyi.system.dto.SysMenuDTO;
@@ -46,23 +45,6 @@ public interface SysMenuService {
     Mono<Void> deleteMenuById(Long menuId);
 
     /**
-     * 根据用户查询系统菜单列表
-     *
-     * @param userId 用户ID
-     * @return 菜单列表
-     */
-    List<SysMenu> selectMenuList(Long userId);
-
-    /**
-     * 根据用户查询系统菜单列表
-     *
-     * @param menu   菜单信息
-     * @param userId 用户ID
-     * @return 菜单列表
-     */
-    List<SysMenu> selectMenuList(SysMenu menu, Long userId);
-
-    /**
      * 根据用户ID查询权限
      *
      * @param userId 用户ID
@@ -92,7 +74,7 @@ public interface SysMenuService {
      * @param roleId 角色ID
      * @return 选中菜单列表
      */
-    List<Long> selectMenuListByRoleId(Long roleId);
+    Flux<Long> selectMenuListByRoleId(Long roleId);
 
     /**
      * 构建前端路由所需要的菜单
@@ -101,21 +83,5 @@ public interface SysMenuService {
      * @return 路由列表
      */
     List<RouterVo> buildMenus(List<SysMenu> menus);
-
-    /**
-     * 构建前端所需要树结构
-     *
-     * @param menus 菜单列表
-     * @return 树结构列表
-     */
-    List<SysMenu> buildMenuTree(List<SysMenu> menus);
-
-    /**
-     * 构建前端所需要下拉树结构
-     *
-     * @param menus 菜单列表
-     * @return 下拉树结构列表
-     */
-    List<TreeSelect> buildMenuTreeSelect(List<SysMenu> menus);
 
 }

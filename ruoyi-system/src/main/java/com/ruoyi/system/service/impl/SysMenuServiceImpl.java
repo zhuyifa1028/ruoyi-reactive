@@ -2,22 +2,21 @@ package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.TreeSelect;
 import com.ruoyi.common.core.domain.entity.SysMenu;
-import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.system.converter.SysMenuConverter;
+import com.ruoyi.system.domain.SysRoleMenu;
 import com.ruoyi.system.domain.vo.MetaVo;
 import com.ruoyi.system.domain.vo.RouterVo;
 import com.ruoyi.system.dto.SysMenuDTO;
 import com.ruoyi.system.mapper.SysMenuMapper;
-import com.ruoyi.system.mapper.SysRoleMapper;
 import com.ruoyi.system.query.SysMenuQuery;
 import com.ruoyi.system.repository.SysMenuRepository;
+import com.ruoyi.system.repository.SysRoleMenuRepository;
 import com.ruoyi.system.service.SysMenuService;
 import com.ruoyi.system.vo.SysMenuVO;
 import jakarta.annotation.Resource;
@@ -27,7 +26,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 菜单表 业务处理
@@ -44,40 +42,10 @@ public class SysMenuServiceImpl implements SysMenuService {
     private SysMenuRepository sysMenuRepository;
 
     @Resource
-    private SysMenuMapper menuMapper;
+    private SysRoleMenuRepository sysRoleMenuRepository;
 
     @Resource
-    private SysRoleMapper roleMapper;
-
-    /**
-     * 根据用户查询系统菜单列表
-     *
-     * @param userId 用户ID
-     * @return 菜单列表
-     */
-    @Override
-    public List<SysMenu> selectMenuList(Long userId) {
-        return selectMenuList(new SysMenu(), userId);
-    }
-
-    /**
-     * 查询系统菜单列表
-     *
-     * @param menu 菜单信息
-     * @return 菜单列表
-     */
-    @Override
-    public List<SysMenu> selectMenuList(SysMenu menu, Long userId) {
-        List<SysMenu> menuList;
-        // 管理员显示所有菜单信息
-        if (SysUser.isAdmin(userId)) {
-            menuList = menuMapper.selectMenuList(menu);
-        } else {
-            menu.getParams().put("userId", userId);
-            menuList = menuMapper.selectMenuListByUserId(menu);
-        }
-        return menuList;
-    }
+    private SysMenuMapper menuMapper;
 
     /**
      * 根据用户ID查询权限
@@ -139,9 +107,9 @@ public class SysMenuServiceImpl implements SysMenuService {
      * @return 选中菜单列表
      */
     @Override
-    public List<Long> selectMenuListByRoleId(Long roleId) {
-        SysRole role = roleMapper.selectRoleById(roleId);
-        return menuMapper.selectMenuListByRoleId(roleId, role.isMenuCheckStrictly());
+    public Flux<Long> selectMenuListByRoleId(Long roleId) {
+        return sysRoleMenuRepository.findAllByRoleId(roleId)
+                .map(SysRoleMenu::getMenuId);
     }
 
     /**
@@ -193,41 +161,6 @@ public class SysMenuServiceImpl implements SysMenuService {
             routers.add(router);
         }
         return routers;
-    }
-
-    /**
-     * 构建前端所需要树结构
-     *
-     * @param menus 菜单列表
-     * @return 树结构列表
-     */
-    @Override
-    public List<SysMenu> buildMenuTree(List<SysMenu> menus) {
-        List<SysMenu> returnList = new ArrayList<>();
-        List<Long> tempList = menus.stream().map(SysMenu::getMenuId).toList();
-        for (SysMenu menu : menus) {
-            // 如果是顶级节点, 遍历该父节点的所有子节点
-            if (!tempList.contains(menu.getParentId())) {
-                recursionFn(menus, menu);
-                returnList.add(menu);
-            }
-        }
-        if (returnList.isEmpty()) {
-            returnList = menus;
-        }
-        return returnList;
-    }
-
-    /**
-     * 构建前端所需要下拉树结构
-     *
-     * @param menus 菜单列表
-     * @return 下拉树结构列表
-     */
-    @Override
-    public List<TreeSelect> buildMenuTreeSelect(List<SysMenu> menus) {
-        List<SysMenu> menuTrees = buildMenuTree(menus);
-        return menuTrees.stream().map(TreeSelect::new).collect(Collectors.toList());
     }
 
     /**

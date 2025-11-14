@@ -200,10 +200,10 @@
             :data="menuOptions"
             show-checkbox
             ref="menu"
-            node-key="id"
+            node-key="menuId"
             :check-strictly="!form.menuCheckStrictly"
             empty-text="加载中，请稍候"
-            :props="defaultProps"
+            :props="{ children: 'children', label: 'menuName' }"
           ></el-tree>
         </el-form-item>
         <el-form-item label="备注">
@@ -245,10 +245,10 @@
             show-checkbox
             default-expand-all
             ref="dept"
-            node-key="id"
+            node-key="deptId"
             :check-strictly="!form.deptCheckStrictly"
             empty-text="加载中，请稍候"
-            :props="defaultProps"
+            :props="{ children: 'children', label: 'deptName' }"
           ></el-tree>
         </el-form-item>
       </el-form>
@@ -261,8 +261,8 @@
 </template>
 
 <script>
-import {listRole, getRole, delRole, addRole, updateRole, dataScope, changeRoleStatus, deptTreeSelect} from "@/api/system/role"
-import {treeselect as menuTreeselect, roleMenuTreeselect} from "@/api/system/menu"
+import {addRole, changeRoleStatus, dataScope, delRole, deptTreeSelect, getRole, listRole, updateRole} from "@/api/system/role"
+import {roleMenuTreeselect, treeselect as menuTreeselect} from "@/api/system/menu"
 
 export default {
   name: "Role",
@@ -332,10 +332,7 @@ export default {
       },
       // 表单参数
       form: {},
-      defaultProps: {
-        children: "children",
-        label: "label"
-      },
+      defaultProps: {children: 'children', label: 'menuName'},
       // 表单校验
       rules: {
         roleName: [
