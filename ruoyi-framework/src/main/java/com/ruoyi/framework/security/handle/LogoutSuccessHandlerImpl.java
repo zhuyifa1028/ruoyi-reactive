@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.manager.AsyncManager;
@@ -41,25 +40,30 @@ public class LogoutSuccessHandlerImpl implements ServerLogoutSuccessHandler {
      */
     @Override
     public Mono<Void> onLogoutSuccess(WebFilterExchange exchange, Authentication authentication) {
-        LoginUser loginUser = tokenService.getLoginUser(exchange.getExchange());
-        if (StringUtils.isNotNull(loginUser)) {
-            String userName = loginUser.getUsername();
-            // 删除用户缓存记录
-            tokenService.delLoginUser(loginUser.getToken());
-            // 记录用户退出日志
-            AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange.getExchange(), userName, Constants.LOGOUT, MessageUtils.message("user.logout.success")));
-        }
+        return tokenService.getLoginUser(exchange.getExchange())
+                .flatMap(loginUser -> {
+                    if (StringUtils.isNotNull(loginUser)) {
+                        String userName = loginUser.getUsername();
+                        // 删除用户缓存记录
+                        tokenService.delLoginUser(loginUser.getToken());
+                        // 记录用户退出日志
+                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange.getExchange(), userName, Constants.LOGOUT, MessageUtils.message("user.logout.success")));
+                    }
+                    return Mono.empty();
+                })
+                .then(Mono.defer(() -> {
+                    try {
+                        byte[] bytes = objectMapper.writeValueAsBytes(AjaxResult.success(MessageUtils.message("user.logout.success")));
 
-        try {
-            byte[] bytes = objectMapper.writeValueAsBytes(AjaxResult.success(MessageUtils.message("user.logout.success")));
+                        ServerHttpResponse response = exchange.getExchange().getResponse();
+                        response.setStatusCode(org.springframework.http.HttpStatus.OK);
+                        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-            ServerHttpResponse response = exchange.getExchange().getResponse();
-            response.setStatusCode(org.springframework.http.HttpStatus.OK);
-            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-
-            return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
-        } catch (JsonProcessingException e) {
-            return Mono.error(e);
-        }
+                        return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+                    } catch (JsonProcessingException e) {
+                        return Mono.error(e);
+                    }
+                }));
     }
+
 }

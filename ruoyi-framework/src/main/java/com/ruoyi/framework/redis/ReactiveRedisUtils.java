@@ -1,29 +1,42 @@
 package com.ruoyi.framework.redis;
 
 import jakarta.annotation.Resource;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.reactivestreams.Publisher;
+import org.springframework.data.redis.core.ReactiveHashOperations;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 /**
- * spring redis 工具类
+ * 响应式redis工具类
  *
- * @author ruoyi
+ * @author bugout
+ * @version 2025-11-15
  **/
 @SuppressWarnings("unused")
 @Component
 public class ReactiveRedisUtils<T> {
 
     @Resource
-    public RedisTemplate<String, T> redisTemplate;
+    private ReactiveRedisOperations<String, T> reactiveRedisOperations;
+
+    /**
+     * 获得缓存的基本对象列表
+     *
+     * @param pattern 字符串前缀
+     * @return 对象列表
+     */
+    public Flux<String> keys(String pattern) {
+        return reactiveRedisOperations.keys(pattern);
+    }
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
@@ -31,23 +44,19 @@ public class ReactiveRedisUtils<T> {
      * @param key   缓存的键值
      * @param value 缓存的值
      */
-    public Mono<Boolean> setCacheObject(final String key, final T value) {
-        return Mono.fromCallable(() -> {
-            redisTemplate.opsForValue().set(key, value);
-            return true;
-        });
+    public Mono<Boolean> setCacheObject(String key, T value) {
+        return reactiveRedisOperations.opsForValue().set(key, value);
     }
 
     /**
      * 缓存基本的对象，Integer、String、实体类等
      *
-     * @param key      缓存的键值
-     * @param value    缓存的值
-     * @param timeout  时间
-     * @param timeUnit 时间颗粒度
+     * @param key     缓存的键值
+     * @param value   缓存的值
+     * @param timeout 时间
      */
-    public void setCacheObject(final String key, final T value, final Integer timeout, final TimeUnit timeUnit) {
-        redisTemplate.opsForValue().set(key, value, timeout, timeUnit);
+    public Mono<Boolean> setCacheObject(String key, T value, Duration timeout) {
+        return reactiveRedisOperations.opsForValue().set(key, value, timeout);
     }
 
     /**
@@ -57,8 +66,8 @@ public class ReactiveRedisUtils<T> {
      * @param timeout 超时时间
      * @return true=设置成功；false=设置失败
      */
-    public boolean expire(final String key, final long timeout) {
-        return expire(key, timeout, TimeUnit.SECONDS);
+    public Mono<Boolean> expire(String key, long timeout) {
+        return expire(key, Duration.ofSeconds(timeout));
     }
 
     /**
@@ -66,11 +75,10 @@ public class ReactiveRedisUtils<T> {
      *
      * @param key     Redis键
      * @param timeout 超时时间
-     * @param unit    时间单位
      * @return true=设置成功；false=设置失败
      */
-    public boolean expire(final String key, final long timeout, final TimeUnit unit) {
-        return redisTemplate.expire(key, timeout, unit);
+    public Mono<Boolean> expire(String key, Duration timeout) {
+        return reactiveRedisOperations.expire(key, timeout);
     }
 
     /**
@@ -79,8 +87,8 @@ public class ReactiveRedisUtils<T> {
      * @param key Redis键
      * @return 有效时间
      */
-    public long getExpire(final String key) {
-        return redisTemplate.getExpire(key);
+    public Mono<Duration> getExpire(String key) {
+        return reactiveRedisOperations.getExpire(key);
     }
 
     /**
@@ -89,8 +97,8 @@ public class ReactiveRedisUtils<T> {
      * @param key 键
      * @return true 存在 false不存在
      */
-    public Boolean hasKey(String key) {
-        return redisTemplate.hasKey(key);
+    public Mono<Boolean> hasKey(String key) {
+        return reactiveRedisOperations.hasKey(key);
     }
 
     /**
@@ -99,25 +107,25 @@ public class ReactiveRedisUtils<T> {
      * @param key 缓存键值
      * @return 缓存键值对应的数据
      */
-    public Mono<T> getCacheObject(final String key) {
-        return Mono.fromCallable(() -> redisTemplate.opsForValue().get(key));
+    public Mono<T> getCacheObject(String key) {
+        ReactiveValueOperations<String, T> opsForValue = reactiveRedisOperations.opsForValue();
+        return opsForValue.get(key);
     }
 
     /**
      * 删除单个对象
      *
      */
-    public Mono<Boolean> deleteObject(final String key) {
-        return Mono.fromCallable(() -> redisTemplate.delete(key));
+    public Mono<Long> deleteObject(String key) {
+        return reactiveRedisOperations.delete(key);
     }
 
     /**
      * 删除集合对象
      *
-     * @param collection 多个对象
      */
-    public Mono<Long> deleteObject(final Flux<String> collection) {
-        return collection.collectList().map(keys -> redisTemplate.delete(keys));
+    public Mono<Long> deleteObject(Publisher<String> keys) {
+        return reactiveRedisOperations.delete(keys);
     }
 
     /**
@@ -127,9 +135,8 @@ public class ReactiveRedisUtils<T> {
      * @param dataList 待缓存的List数据
      * @return 缓存的对象
      */
-    public long setCacheList(final String key, final List<T> dataList) {
-        Long count = redisTemplate.opsForList().rightPushAll(key, dataList);
-        return count == null ? 0 : count;
+    public Mono<Long> setCacheList(String key, List<T> dataList) {
+        return reactiveRedisOperations.opsForList().rightPushAll(key, dataList);
     }
 
     /**
@@ -138,31 +145,33 @@ public class ReactiveRedisUtils<T> {
      * @param key 缓存的键值
      * @return 缓存键值对应的数据
      */
-    public List<T> getCacheList(final String key) {
-        return redisTemplate.opsForList().range(key, 0, -1);
+    public Flux<T> getCacheList(String key) {
+        return reactiveRedisOperations.opsForList().range(key, 0, -1);
     }
 
     /**
      * 获得缓存的set
      */
-    public Set<T> getCacheSet(final String key) {
-        return redisTemplate.opsForSet().members(key);
+    public Flux<T> getCacheSet(String key) {
+        return reactiveRedisOperations.opsForSet().members(key);
     }
 
     /**
      * 缓存Map
      */
-    public void setCacheMap(final String key, final Map<String, T> dataMap) {
-        if (dataMap != null) {
-            redisTemplate.opsForHash().putAll(key, dataMap);
+    public Mono<Boolean> setCacheMap(String key, Map<String, T> dataMap) {
+        if (Objects.nonNull(dataMap)) {
+            return reactiveRedisOperations.opsForHash().putAll(key, dataMap);
         }
+        return Mono.empty();
     }
 
     /**
      * 获得缓存的Map
+     *
      */
-    public Map<String, T> getCacheMap(final String key) {
-        HashOperations<String, String, T> opsForHash = redisTemplate.opsForHash();
+    public Flux<Map.Entry<String, T>> getCacheMap(String key) {
+        ReactiveHashOperations<String, String, T> opsForHash = reactiveRedisOperations.opsForHash();
         return opsForHash.entries(key);
     }
 
@@ -173,8 +182,9 @@ public class ReactiveRedisUtils<T> {
      * @param hKey  Hash键
      * @param value 值
      */
-    public void setCacheMapValue(final String key, final String hKey, final T value) {
-        redisTemplate.opsForHash().put(key, hKey, value);
+    public Mono<Boolean> setCacheMapValue(String key, String hKey, T value) {
+        ReactiveHashOperations<String, String, T> opsForHash = reactiveRedisOperations.opsForHash();
+        return opsForHash.put(key, hKey, value);
     }
 
     /**
@@ -184,8 +194,8 @@ public class ReactiveRedisUtils<T> {
      * @param hKey Hash键
      * @return Hash中的对象
      */
-    public T getCacheMapValue(final String key, final String hKey) {
-        HashOperations<String, String, T> opsForHash = redisTemplate.opsForHash();
+    public Mono<T> getCacheMapValue(String key, String hKey) {
+        ReactiveHashOperations<String, String, T> opsForHash = reactiveRedisOperations.opsForHash();
         return opsForHash.get(key, hKey);
     }
 
@@ -196,8 +206,8 @@ public class ReactiveRedisUtils<T> {
      * @param hKeys Hash键集合
      * @return Hash对象集合
      */
-    public List<T> getMultiCacheMapValue(final String key, final Collection<String> hKeys) {
-        HashOperations<String, String, T> opsForHash = redisTemplate.opsForHash();
+    public Mono<List<T>> getMultiCacheMapValue(String key, Collection<String> hKeys) {
+        ReactiveHashOperations<String, String, T> opsForHash = reactiveRedisOperations.opsForHash();
         return opsForHash.multiGet(key, hKeys);
     }
 
@@ -208,17 +218,8 @@ public class ReactiveRedisUtils<T> {
      * @param hKey Hash键
      * @return 是否成功
      */
-    public boolean deleteCacheMapValue(final String key, final String hKey) {
-        return redisTemplate.opsForHash().delete(key, hKey) > 0;
+    public Mono<Long> deleteCacheMapValue(String key, String hKey) {
+        return reactiveRedisOperations.opsForHash().remove(key, hKey);
     }
 
-    /**
-     * 获得缓存的基本对象列表
-     *
-     * @param pattern 字符串前缀
-     * @return 对象列表
-     */
-    public Flux<String> keys(final String pattern) {
-        return Flux.fromIterable(redisTemplate.keys(pattern));
-    }
 }

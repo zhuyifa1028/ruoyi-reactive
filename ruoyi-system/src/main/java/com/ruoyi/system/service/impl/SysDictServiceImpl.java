@@ -63,15 +63,15 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
      */
     @Override
     public Flux<SysDictVO> selectDictListByType(String dictType) {
-        return com.ruoyi.system.utils.DictUtils.getDictCache(dictType)
+        return DictUtils.getDictCache(dictType)
                 .switchIfEmpty(
                         // 根据字典类型查询
                         sysDictRepository.findAllByDictType(dictType)
                                 .collectList()
                                 .flatMapMany(list -> {
                                     // 更新字典缓存
-                                    com.ruoyi.system.utils.DictUtils.setDictCache(dictType, list);
-                                    return Flux.fromIterable(list);
+                                    return DictUtils.setDictCache(dictType, list)
+                                            .thenMany(Flux.fromIterable(list));
                                 })
                 )
                 .map(sysDictConverter::toSysDictVO);
@@ -100,10 +100,8 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 }))
                 .thenMany(sysDictRepository.findAllByDictType(dto.getDictType()))
                 .collectList()
-                .doOnNext(dictList -> {
-                    // 更新字典缓存
-                    com.ruoyi.system.utils.DictUtils.setDictCache(dto.getDictType(), dictList);
-                })
+                // 更新字典缓存
+                .flatMap(dictList -> DictUtils.setDictCache(dto.getDictType(), dictList))
                 .then();
     }
 
@@ -136,10 +134,8 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 })
                 .thenMany(sysDictRepository.findAllByDictType(dto.getDictType()))
                 .collectList()
-                .doOnNext(dictList -> {
-                    // 更新字典缓存
-                    com.ruoyi.system.utils.DictUtils.setDictCache(dto.getDictType(), dictList);
-                })
+                // 更新字典缓存
+                .flatMap(dictList -> DictUtils.setDictCache(dto.getDictType(), dictList))
                 .then();
     }
 
@@ -161,10 +157,8 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                     // 根据字典类型查询
                     return sysDictRepository.findAllByDictType(dictType)
                             .collectList()
-                            .doOnNext(dictList -> {
-                                // 更新字典缓存
-                                com.ruoyi.system.utils.DictUtils.setDictCache(dictType, dictList);
-                            });
+                            // 更新字典缓存
+                            .flatMap(dictList -> DictUtils.setDictCache(dictType, dictList));
                 })
                 .then();
     }
@@ -181,7 +175,7 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 .groupBy(SysDict::getDictType)
                 // 写入缓存
                 .flatMap(group ->
-                        group.collectList().doOnNext(dictList -> DictUtils.setDictCache(group.key(), dictList))
+                        group.collectList().flatMap(dictList -> DictUtils.setDictCache(group.key(), dictList))
                 )
                 .then();
     }

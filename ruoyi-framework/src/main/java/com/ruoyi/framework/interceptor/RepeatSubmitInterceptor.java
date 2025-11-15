@@ -36,19 +36,23 @@ public abstract class RepeatSubmitInterceptor implements WebFilter {
             Method method = handlerMethod.getMethod();
             RepeatSubmit annotation = method.getAnnotation(RepeatSubmit.class);
             if (annotation != null) {
-                if (this.isRepeatSubmit(exchange, annotation)) {
-                    try {
-                        byte[] bytes = objectMapper.writeValueAsBytes(AjaxResult.error(annotation.message()));
+                return this.isRepeatSubmit(exchange, annotation)
+                        .flatMap(result -> {
+                            if (result) {
+                                try {
+                                    byte[] bytes = objectMapper.writeValueAsBytes(AjaxResult.error(annotation.message()));
 
-                        ServerHttpResponse response = exchange.getResponse();
-                        response.setStatusCode(HttpStatus.OK);
-                        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                                    ServerHttpResponse response = exchange.getResponse();
+                                    response.setStatusCode(HttpStatus.OK);
+                                    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-                        return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
-                    } catch (JsonProcessingException e) {
-                        return Mono.error(e);
-                    }
-                }
+                                    return response.writeWith(Mono.just(response.bufferFactory().wrap(bytes)));
+                                } catch (JsonProcessingException e) {
+                                    return Mono.error(e);
+                                }
+                            }
+                            return Mono.empty();
+                        });
             }
         }
 
@@ -62,6 +66,6 @@ public abstract class RepeatSubmitInterceptor implements WebFilter {
      * @param annotation 防重复注解参数
      * @return 结果
      */
-    public abstract boolean isRepeatSubmit(ServerWebExchange request, RepeatSubmit annotation);
+    public abstract Mono<Boolean> isRepeatSubmit(ServerWebExchange request, RepeatSubmit annotation);
 
 }

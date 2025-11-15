@@ -14,12 +14,12 @@ import java.lang.annotation.*;
 @Documented
 public @interface RepeatSubmit {
     /**
-     * 间隔时间(ms)，小于此时间视为重复提交
+     * 间隔时间(秒)，小于此时间视为重复提交
      */
-    public int interval() default 5000;
+    int interval() default 5;
 
     /**
      * 提示消息
      */
-    public String message() default "不允许重复提交，请稍候再试";
+    String message() default "不允许重复提交，请稍候再试";
 }

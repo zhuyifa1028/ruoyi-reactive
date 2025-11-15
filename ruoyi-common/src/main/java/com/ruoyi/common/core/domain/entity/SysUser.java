@@ -1,5 +1,6 @@
 package com.ruoyi.common.core.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.annotation.Excel.ColumnType;
 import com.ruoyi.common.annotation.Excel.Type;
@@ -149,6 +150,7 @@ public class SysUser extends BaseEntity {
         this.userId = userId;
     }
 
+    @JsonIgnore
     public boolean isAdmin() {
         return isAdmin(this.userId);
     }

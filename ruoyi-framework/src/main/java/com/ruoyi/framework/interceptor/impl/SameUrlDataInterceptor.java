@@ -3,9 +3,9 @@ package com.ruoyi.framework.interceptor.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ruoyi.common.annotation.RepeatSubmit;
 import com.ruoyi.common.constant.CacheConstants;
-import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.interceptor.RepeatSubmitInterceptor;
+import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +16,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 判断请求url和数据是否和上一次相同，
@@ -39,15 +38,13 @@ public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
     private String header;
 
     @Resource
-    private RedisCache redisCache;
+    private ReactiveRedisUtils<Map<String, Map<String, Object>>> reactiveRedisUtils;
 
     @Override
-    public boolean isRepeatSubmit(ServerWebExchange exchange, RepeatSubmit annotation) {
-        AtomicReference<String> nowParams = new AtomicReference<>("");
-
+    public Mono<Boolean> isRepeatSubmit(ServerWebExchange exchange, RepeatSubmit annotation) {
         ServerHttpRequest request = exchange.getRequest();
         // 请求体
-        request.getBody()
+        return request.getBody()
                 .reduce(new StringBuilder(), (sb, dataBuffer) -> {
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];
                     dataBuffer.read(bytes);
@@ -56,45 +53,46 @@ public class SameUrlDataInterceptor extends RepeatSubmitInterceptor {
                 })
                 .defaultIfEmpty(new StringBuilder())
                 .flatMap(sb -> {
-                    nowParams.set(sb.toString());
-                    return Mono.empty();
-                })
-                .subscribe();
+                    String nowParams = sb.toString();
 
-        // body参数为空，获取Parameter的数据
-        if (StringUtils.isEmpty(nowParams.get())) {
-            try {
-                nowParams.set(objectMapper.writeValueAsString(request.getQueryParams()));
-            } catch (JsonProcessingException e) {
-                log.error("请求参数转Json字符串异常", e);
-            }
-        }
+                    // body参数为空，获取Parameter的数据
+                    if (StringUtils.isEmpty(nowParams)) {
+                        try {
+                            nowParams = objectMapper.writeValueAsString(request.getQueryParams());
+                        } catch (JsonProcessingException e) {
+                            log.error("请求参数转Json字符串异常", e);
+                        }
+                    }
 
-        Map<String, Object> nowDataMap = new HashMap<>();
-        nowDataMap.put(REPEAT_PARAMS, nowParams);
-        nowDataMap.put(REPEAT_TIME, System.currentTimeMillis());
+                    Map<String, Object> nowDataMap = new HashMap<>();
+                    nowDataMap.put(REPEAT_PARAMS, nowParams);
+                    nowDataMap.put(REPEAT_TIME, System.currentTimeMillis());
 
-        // 请求地址（作为存放cache的key值）
-        String url = request.getURI().getPath();
+                    // 请求地址（作为存放cache的key值）
+                    String url = request.getURI().getPath();
 
-        // 唯一值（没有消息头则使用请求地址）
-        String submitKey = StringUtils.trimToEmpty(request.getHeaders().getFirst(header));
+                    // 唯一值（没有消息头则使用请求地址）
+                    String submitKey = StringUtils.trimToEmpty(request.getHeaders().getFirst(header));
 
-        // 唯一标识（指定key + url + 消息头）
-        String cacheRepeatKey = CacheConstants.REPEAT_SUBMIT_KEY + url + submitKey;
+                    // 唯一标识（指定key + url + 消息头）
+                    String cacheRepeatKey = CacheConstants.REPEAT_SUBMIT_KEY + url + submitKey;
 
-        Map<String, Map<String, Object>> cacheObject = redisCache.getCacheObject(cacheRepeatKey);
-        if (cacheObject != null && cacheObject.containsKey(url)) {
-            Map<String, Object> preDataMap = cacheObject.get(url);
-            if (compareParams(nowDataMap, preDataMap) && compareTime(nowDataMap, preDataMap, annotation.interval())) {
-                return true;
-            }
-        }
+                    return reactiveRedisUtils.getCacheObject(cacheRepeatKey)
+                            .flatMap(cacheObject -> {
+                                if (cacheObject != null && cacheObject.containsKey(url)) {
+                                    Map<String, Object> preDataMap = cacheObject.get(url);
+                                    if (compareParams(nowDataMap, preDataMap) && compareTime(nowDataMap, preDataMap, annotation.interval())) {
+                                        return Mono.just(true);
+                                    }
+                                }
 
-        Map<String, Map<String, Object>> cacheMap = new HashMap<>();
-        cacheMap.put(url, nowDataMap);
-        redisCache.setCacheObject(cacheRepeatKey, cacheMap, annotation.interval(), TimeUnit.MILLISECONDS);
-        return false;
+                                Map<String, Map<String, Object>> cacheMap = new HashMap<>();
+                                cacheMap.put(url, nowDataMap);
+                                return reactiveRedisUtils.setCacheObject(cacheRepeatKey, cacheMap, Duration.ofSeconds(annotation.interval()))
+                                        .thenReturn(false);
+                            })
+                            .defaultIfEmpty(false);
+                });
     }
 
     /**

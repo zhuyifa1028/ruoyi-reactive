@@ -5,7 +5,6 @@ import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.model.LoginBody;
 import com.ruoyi.common.core.domain.model.LoginUser;
-import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.exception.user.*;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.MessageUtils;
@@ -13,6 +12,7 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
+import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import com.ruoyi.framework.security.context.AuthenticationContextHolder;
 import com.ruoyi.framework.web.service.TokenService;
 import com.ruoyi.system.service.SysConfigService;
@@ -43,7 +43,7 @@ public class SysLoginService {
     private ReactiveAuthenticationManager authenticationManager;
 
     @Resource
-    private RedisCache redisCache;
+    private ReactiveRedisUtils<String> reactiveRedisUtils;
 
     @Resource
     private SysUserService userService;
@@ -93,16 +93,21 @@ public class SysLoginService {
         boolean captchaEnabled = configService.selectCaptchaEnabled();
         if (captchaEnabled) {
             String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.nvl(uuid, "");
-            String captcha = redisCache.getCacheObject(verifyKey);
-            if (captcha == null) {
-                AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
-                throw new CaptchaExpireException();
-            }
-            redisCache.deleteObject(verifyKey);
-            if (!code.equalsIgnoreCase(captcha)) {
-                AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
-                throw new CaptchaException();
-            }
+            reactiveRedisUtils.getCacheObject(verifyKey)
+                    .switchIfEmpty(Mono.defer(() -> {
+                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
+                        throw new CaptchaExpireException();
+                    }))
+                    .subscribe(captcha -> {
+                        // 删除缓存
+                        reactiveRedisUtils.deleteObject(verifyKey)
+                                .subscribe(bool -> {
+                                    if (!code.equalsIgnoreCase(captcha)) {
+                                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
+                                        throw new CaptchaException();
+                                    }
+                                });
+                    });
         }
     }
 

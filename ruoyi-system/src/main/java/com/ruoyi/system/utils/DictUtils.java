@@ -1,15 +1,12 @@
 package com.ruoyi.system.utils;
 
-import com.alibaba.fastjson2.JSONArray;
 import com.ruoyi.common.constant.CacheConstants;
-import com.ruoyi.common.core.redis.RedisCache;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
+import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import com.ruoyi.system.entity.SysDict;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -17,7 +14,14 @@ import java.util.List;
  *
  * @author ruoyi
  */
+@Component
 public class DictUtils {
+
+    private static ReactiveRedisUtils<List<SysDict>> reactiveRedisUtils;
+
+    public DictUtils(ReactiveRedisUtils<List<SysDict>> reactiveRedisUtils) {
+        DictUtils.reactiveRedisUtils = reactiveRedisUtils;
+    }
 
     /**
      * 设置字典缓存
@@ -25,8 +29,8 @@ public class DictUtils {
      * @param key       参数键
      * @param dictDatas 字典数据列表
      */
-    public static void setDictCache(String key, List<SysDict> dictDatas) {
-        SpringUtils.getBean(RedisCache.class).setCacheObject(getCacheKey(key), dictDatas);
+    public static Mono<Boolean> setDictCache(String key, List<SysDict> dictDatas) {
+        return reactiveRedisUtils.setCacheObject(getCacheKey(key), dictDatas);
     }
 
     /**
@@ -36,20 +40,16 @@ public class DictUtils {
      * @return dictDatas 字典数据列表
      */
     public static Flux<SysDict> getDictCache(String key) {
-        JSONArray arrayCache = SpringUtils.getBean(RedisCache.class).getCacheObject(getCacheKey(key));
-        if (StringUtils.isNotNull(arrayCache)) {
-            return Flux.fromIterable(arrayCache.toList(SysDict.class));
-        }
-        return Flux.empty();
+        return reactiveRedisUtils.getCacheObject(getCacheKey(key))
+                .flatMapMany(Flux::fromIterable);
     }
 
     /**
      * 清空字典缓存
      */
-    public static Mono<Void> clearDictCache() {
-        Collection<String> keys = SpringUtils.getBean(RedisCache.class).keys(CacheConstants.SYS_DICT_KEY + "*");
-        SpringUtils.getBean(RedisCache.class).deleteObject(keys);
-        return Mono.empty();
+    public static Mono<Long> clearDictCache() {
+        Flux<String> keys = reactiveRedisUtils.keys(CacheConstants.SYS_DICT_KEY + "*");
+        return reactiveRedisUtils.deleteObject(keys);
     }
 
     /**
