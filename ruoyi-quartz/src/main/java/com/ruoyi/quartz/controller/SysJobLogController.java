@@ -1,24 +1,17 @@
 package com.ruoyi.quartz.controller;
 
-import java.util.List;
-
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.quartz.domain.SysJobLog;
 import com.ruoyi.quartz.service.ISysJobLogService;
+import jakarta.annotation.Resource;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 调度日志操作处理
@@ -28,7 +21,8 @@ import com.ruoyi.quartz.service.ISysJobLogService;
 @RestController
 @RequestMapping("/monitor/jobLog")
 public class SysJobLogController extends BaseController {
-    @Autowired
+
+    @Resource
     private ISysJobLogService jobLogService;
 
     /**
@@ -40,18 +34,6 @@ public class SysJobLogController extends BaseController {
         startPage();
         List<SysJobLog> list = jobLogService.selectJobLogList(sysJobLog);
         return getDataTable(list);
-    }
-
-    /**
-     * 导出定时任务调度日志列表
-     */
-    @PreAuthorize("@ss.hasPermi('monitor:job:export')")
-    @Log(title = "任务调度日志", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, SysJobLog sysJobLog) {
-        List<SysJobLog> list = jobLogService.selectJobLogList(sysJobLog);
-        ExcelUtil<SysJobLog> util = new ExcelUtil<SysJobLog>(SysJobLog.class);
-        util.exportExcel(response, list, "调度日志");
     }
 
     /**

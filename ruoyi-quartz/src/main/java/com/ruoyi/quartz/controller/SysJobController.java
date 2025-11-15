@@ -1,19 +1,5 @@
 package com.ruoyi.quartz.controller;
 
-import java.util.List;
-
-import jakarta.servlet.http.HttpServletResponse;
-import org.quartz.SchedulerException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.core.controller.BaseController;
@@ -22,11 +8,16 @@ import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.exception.job.TaskException;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.quartz.domain.SysJob;
 import com.ruoyi.quartz.service.ISysJobService;
 import com.ruoyi.quartz.util.CronUtils;
 import com.ruoyi.quartz.util.ScheduleUtils;
+import jakarta.annotation.Resource;
+import org.quartz.SchedulerException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 调度任务信息操作处理
@@ -36,7 +27,8 @@ import com.ruoyi.quartz.util.ScheduleUtils;
 @RestController
 @RequestMapping("/monitor/job")
 public class SysJobController extends BaseController {
-    @Autowired
+
+    @Resource
     private ISysJobService jobService;
 
     /**
@@ -48,18 +40,6 @@ public class SysJobController extends BaseController {
         startPage();
         List<SysJob> list = jobService.selectJobList(sysJob);
         return getDataTable(list);
-    }
-
-    /**
-     * 导出定时任务列表
-     */
-    @PreAuthorize("@ss.hasPermi('monitor:job:export')")
-    @Log(title = "定时任务", businessType = BusinessType.EXPORT)
-    @PostMapping("/export")
-    public void export(HttpServletResponse response, SysJob sysJob) {
-        List<SysJob> list = jobService.selectJobList(sysJob);
-        ExcelUtil<SysJob> util = new ExcelUtil<SysJob>(SysJob.class);
-        util.exportExcel(response, list, "定时任务");
     }
 
     /**
