@@ -1,0 +1,80 @@
+package com.ruoyi.system.dto;
+
+import com.ruoyi.common.xss.Xss;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Schema(description = "SysUserDTO")
+@Data
+public class SysUserDTO implements Serializable {
+
+    @Schema(description = "用户ID")
+    private Long userId;
+
+    @Schema(description = "部门ID")
+    private Long deptId;
+
+    @Schema(description = "用户账号")
+    @Xss(message = "用户账号不能包含脚本字符")
+    @NotBlank(message = "用户账号不能为空")
+    @Size(max = 30, message = "用户账号长度不能超过30个字符")
+    private String userName;
+
+    @Schema(description = "用户昵称")
+    @Xss(message = "用户昵称不能包含脚本字符")
+    @Size(max = 30, message = "用户昵称长度不能超过30个字符")
+    private String nickName;
+
+    @Schema(description = "用户邮箱")
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 50, message = "邮箱长度不能超过50个字符")
+    private String email;
+
+    @Schema(description = "手机号码")
+    @Size(max = 11, message = "手机号码长度不能超过11个字符")
+    private String phonenumber;
+
+    @Schema(description = "用户性别")
+    private String sex;
+
+    @Schema(description = "用户头像")
+    private String avatar;
+
+    @Schema(description = "密码")
+    private String password;
+
+    @Schema(description = "账号状态（0正常 1停用）")
+    private String status;
+
+    @Schema(description = "删除标志（0代表存在 2代表删除）")
+    private String delFlag;
+
+    @Schema(description = "最后登录IP")
+    private String loginIp;
+
+    @Schema(description = "最后登录时间")
+    private LocalDateTime loginDate;
+
+    @Schema(description = "密码最后更新时间")
+    private LocalDateTime pwdUpdateDate;
+
+    @Schema(description = "备注")
+    private String remark;
+    /**
+     * 角色组
+     */
+    private List<Long> roleIds;
+
+    /**
+     * 岗位组
+     */
+    private List<Long> postIds;
+
+}

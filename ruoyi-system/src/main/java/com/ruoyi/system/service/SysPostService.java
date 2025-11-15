@@ -1,10 +1,10 @@
 package com.ruoyi.system.service;
 
 import com.ruoyi.system.dto.SysPostDTO;
-import com.ruoyi.system.entity.SysPost;
 import com.ruoyi.system.query.SysPostQuery;
 import com.ruoyi.system.vo.SysPostVO;
 import org.springframework.data.domain.Page;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -43,9 +43,9 @@ public interface SysPostService {
     Mono<Void> deletePostByIds(List<Long> postIds);
 
     /**
-     * 查询岗位选择框列表
+     * 查询所有岗位
      */
-    List<SysPost> selectPostAll();
+    Flux<SysPostVO> selectPostAll();
 
     /**
      * 根据用户ID获取岗位选择框列表

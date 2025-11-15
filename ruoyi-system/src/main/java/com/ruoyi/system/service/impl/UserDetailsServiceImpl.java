@@ -7,7 +7,7 @@ import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.service.SysPasswordService;
-import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.SysUserService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
 
     @Resource
-    private ISysUserService userService;
+    private SysUserService userService;
 
     @Resource
     private SysPasswordService passwordService;

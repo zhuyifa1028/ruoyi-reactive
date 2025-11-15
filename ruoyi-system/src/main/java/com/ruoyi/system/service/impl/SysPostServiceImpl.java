@@ -14,6 +14,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.support.ReactivePageableExecutionUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -153,8 +154,9 @@ public class SysPostServiceImpl implements SysPostService {
      * 查询所有岗位
      */
     @Override
-    public List<SysPost> selectPostAll() {
-        return sysPostMapper.selectPostAll();
+    public Flux<SysPostVO> selectPostAll() {
+        return sysPostRepository.findAll()
+                .map(sysPostConverter::toSysPostVO);
     }
 
     /**

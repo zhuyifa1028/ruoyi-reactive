@@ -13,9 +13,9 @@ import com.ruoyi.common.utils.TreeselectUtils;
 import com.ruoyi.system.dto.SysRoleDTO;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.query.SysRoleQuery;
-import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.SysDeptService;
 import com.ruoyi.system.service.SysRoleService;
+import com.ruoyi.system.service.SysUserService;
 import com.ruoyi.system.vo.SysDeptVO;
 import com.ruoyi.system.vo.SysRoleVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,7 +37,7 @@ public class SysRoleController extends BaseController {
     private SysRoleService sysRoleService;
 
     @Resource
-    private ISysUserService userService;
+    private SysUserService userService;
 
     @Resource
     private SysDeptService deptService;

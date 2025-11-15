@@ -3,12 +3,10 @@ package com.ruoyi.web.controller.system;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.system.dto.SysPostDTO;
-import com.ruoyi.system.entity.SysPost;
 import com.ruoyi.system.query.SysPostQuery;
 import com.ruoyi.system.service.SysPostService;
 import com.ruoyi.system.vo.SysPostVO;
@@ -82,9 +80,10 @@ public class SysPostController extends BaseController {
 
     @Operation(summary = "查询岗位选择框列表")
     @GetMapping("/optionselect")
-    public AjaxResult optionselect() {
-        List<SysPost> posts = sysPostService.selectPostAll();
-        return success(posts);
+    public Mono<R<List<SysPostVO>>> optionselect() {
+        return sysPostService.selectPostAll()
+                .collectList()
+                .map(R::ok);
     }
 
 }

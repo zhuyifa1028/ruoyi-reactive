@@ -14,7 +14,7 @@ import com.ruoyi.common.utils.file.FileUploadUtils;
 import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.framework.web.service.TokenService;
-import com.ruoyi.system.service.ISysUserService;
+import com.ruoyi.system.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +30,7 @@ import java.util.Map;
 @RequestMapping("/system/user/profile")
 public class SysProfileController extends BaseController {
     @Autowired
-    private ISysUserService userService;
+    private SysUserService userService;
 
     @Autowired
     private TokenService tokenService;
@@ -60,12 +60,12 @@ public class SysProfileController extends BaseController {
         currentUser.setEmail(user.getEmail());
         currentUser.setPhonenumber(user.getPhonenumber());
         currentUser.setSex(user.getSex());
-        if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(currentUser)) {
-            return error("修改用户'" + loginUser.getUsername() + "'失败，手机号码已存在");
-        }
-        if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(currentUser)) {
-            return error("修改用户'" + loginUser.getUsername() + "'失败，邮箱账号已存在");
-        }
+//        if (StringUtils.isNotEmpty(user.getPhonenumber()) && !userService.checkPhoneUnique(currentUser)) {
+//            return error("修改用户'" + loginUser.getUsername() + "'失败，手机号码已存在");
+//        }
+//        if (StringUtils.isNotEmpty(user.getEmail()) && !userService.checkEmailUnique(currentUser)) {
+//            return error("修改用户'" + loginUser.getUsername() + "'失败，邮箱账号已存在");
+//        }
         if (userService.updateUserProfile(currentUser) > 0) {
             // 更新缓存用户信息
             tokenService.setLoginUser(loginUser);
