@@ -1,7 +1,6 @@
 package com.ruoyi.framework.web;
 
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
@@ -9,7 +8,7 @@ import reactor.util.context.ContextView;
 
 public class ReactiveRequestContextHolder {
 
-    private static final Class<?> REQUEST_CONTEXT_KEY = SecurityContext.class;
+    private static final Class<?> REQUEST_CONTEXT_KEY = ServerWebExchange.class;
 
     public static Context withRequestContext(ServerWebExchange exchange) {
         return Context.of(REQUEST_CONTEXT_KEY, exchange);

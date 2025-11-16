@@ -82,7 +82,7 @@ public class TokenService {
      */
     public void setLoginUser(LoginUser loginUser) {
         if (StringUtils.isNotNull(loginUser) && StringUtils.isNotEmpty(loginUser.getToken())) {
-            refreshToken(loginUser);
+            refreshToken(loginUser).subscribe();
         }
     }
 
@@ -106,7 +106,7 @@ public class TokenService {
         String token = IdUtils.fastUUID();
         loginUser.setToken(token);
         setUserAgent(loginUser);
-        refreshToken(loginUser);
+        refreshToken(loginUser).subscribe();
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, token);
@@ -119,12 +119,13 @@ public class TokenService {
      *
      * @param loginUser 登录信息
      */
-    public void verifyToken(LoginUser loginUser) {
+    public Mono<Boolean> verifyToken(LoginUser loginUser) {
         long expireTime = loginUser.getExpireTime();
         long currentTime = System.currentTimeMillis();
         if (expireTime - currentTime <= MILLIS_MINUTE_TWENTY) {
-            refreshToken(loginUser);
+            return refreshToken(loginUser);
         }
+        return Mono.just(true);
     }
 
     /**
@@ -132,12 +133,12 @@ public class TokenService {
      *
      * @param loginUser 登录信息
      */
-    public void refreshToken(LoginUser loginUser) {
+    public Mono<Boolean> refreshToken(LoginUser loginUser) {
         loginUser.setLoginTime(System.currentTimeMillis());
         loginUser.setExpireTime(loginUser.getLoginTime() + expireTime * MILLIS_MINUTE);
         // 根据uuid将loginUser缓存
         String userKey = getTokenKey(loginUser.getToken());
-        reactiveRedisUtils.setCacheObject(userKey, loginUser, Duration.ofMinutes(expireTime)).subscribe();
+        return reactiveRedisUtils.setCacheObject(userKey, loginUser, Duration.ofMinutes(expireTime));
     }
 
     /**

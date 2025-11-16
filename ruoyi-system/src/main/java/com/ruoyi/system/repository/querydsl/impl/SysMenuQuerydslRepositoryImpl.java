@@ -50,6 +50,7 @@ public class SysMenuQuerydslRepositoryImpl implements SysMenuQuerydslRepository 
         predicate.and(sysUserRole.userId.eq(userId));
 
         return queryFactory.selectDistinct(sysMenu)
+                .from(sysMenu)
                 .leftJoin(sysRoleMenu).on(sysRoleMenu.menuId.eq(sysMenu.menuId))
                 .leftJoin(sysUserRole).on(sysUserRole.roleId.eq(sysRoleMenu.roleId))
                 .where(predicate)

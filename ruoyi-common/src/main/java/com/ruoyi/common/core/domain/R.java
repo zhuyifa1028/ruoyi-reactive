@@ -1,6 +1,7 @@
 package com.ruoyi.common.core.domain;
 
 import com.ruoyi.common.constant.HttpStatus;
+import lombok.Data;
 
 import java.io.Serializable;
 
@@ -9,8 +10,8 @@ import java.io.Serializable;
  *
  * @author ruoyi
  */
+@Data
 public class R<T> implements Serializable {
-    private static final long serialVersionUID = 1L;
 
     /**
      * 成功
@@ -40,23 +41,11 @@ public class R<T> implements Serializable {
         return restResult(data, SUCCESS, msg);
     }
 
-    public static <T> R<T> fail() {
-        return restResult(null, FAIL, "操作失败");
-    }
-
     public static <T> R<T> fail(String msg) {
         return restResult(null, FAIL, msg);
     }
 
-    public static <T> R<T> fail(T data) {
-        return restResult(data, FAIL, "操作失败");
-    }
-
-    public static <T> R<T> fail(T data, String msg) {
-        return restResult(data, FAIL, msg);
-    }
-
-    public static <T> R<T> fail(int code, String msg) {
+    public static <T> R<T> fail(Integer code, String msg) {
         return restResult(null, code, msg);
     }
 
@@ -68,35 +57,4 @@ public class R<T> implements Serializable {
         return apiResult;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
-        this.msg = msg;
-    }
-
-    public T getData() {
-        return data;
-    }
-
-    public void setData(T data) {
-        this.data = data;
-    }
-
-    public static <T> Boolean isError(R<T> ret) {
-        return !isSuccess(ret);
-    }
-
-    public static <T> Boolean isSuccess(R<T> ret) {
-        return R.SUCCESS == ret.getCode();
-    }
 }
