@@ -1,8 +1,9 @@
-package com.ruoyi.common.core.domain.model;
+package com.ruoyi.framework.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -15,6 +16,7 @@ import java.util.Set;
  * @author ruoyi
  */
 @Data
+@NoArgsConstructor
 public class LoginUser implements UserDetails {
 
     /**
@@ -71,14 +73,6 @@ public class LoginUser implements UserDetails {
      * 用户信息
      */
     private SysUser user;
-
-    public LoginUser() {
-    }
-
-    public LoginUser(SysUser user, Set<String> permissions) {
-        this.user = user;
-        this.permissions = permissions;
-    }
 
     public LoginUser(Long userId, Long deptId, SysUser user, Set<String> permissions) {
         this.userId = userId;

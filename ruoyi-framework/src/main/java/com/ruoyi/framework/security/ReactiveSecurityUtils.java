@@ -1,9 +1,10 @@
 package com.ruoyi.framework.security;
 
-import com.ruoyi.common.core.domain.model.LoginUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 /**
@@ -12,7 +13,14 @@ import reactor.core.publisher.Mono;
  * @author bugout
  * @version 2025-11-11
  */
+@Component
 public class ReactiveSecurityUtils {
+
+    private static PasswordEncoder passwordEncoder;
+
+    public ReactiveSecurityUtils(PasswordEncoder passwordEncoder) {
+        ReactiveSecurityUtils.passwordEncoder = passwordEncoder;
+    }
 
     /**
      * 获取Authentication
@@ -45,6 +53,27 @@ public class ReactiveSecurityUtils {
     public static Mono<Long> getUserId() {
         return getLoginUser()
                 .map(LoginUser::getUserId);
+    }
+
+    /**
+     * 生成BCryptPasswordEncoder密码
+     *
+     * @param password 密码
+     * @return 加密字符串
+     */
+    public static String encryptPassword(String password) {
+        return passwordEncoder.encode(password);
+    }
+
+    /**
+     * 判断密码是否相同
+     *
+     * @param rawPassword     真实密码
+     * @param encodedPassword 加密后字符
+     * @return 结果
+     */
+    public static boolean matchesPassword(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
 }

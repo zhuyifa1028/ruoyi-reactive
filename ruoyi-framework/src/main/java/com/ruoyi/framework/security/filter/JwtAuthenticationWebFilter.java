@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
  * @author ruoyi
  */
 @Component
-public class JwtAuthenticationTokenFilter implements WebFilter {
+public class JwtAuthenticationWebFilter implements WebFilter {
 
     @Resource
     private TokenService tokenService;

@@ -5,7 +5,6 @@ import com.ruoyi.common.constant.UserConstants;
 import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
@@ -240,14 +239,18 @@ public class SysDeptServiceImpl implements SysDeptService {
      */
     @Override
     public void checkDeptDataScope(Long deptId) {
-        if (!SysUser.isAdmin(SecurityUtils.getUserId()) && StringUtils.isNotNull(deptId)) {
-            SysDept dept = new SysDept();
-            dept.setDeptId(deptId);
-            List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
-            if (StringUtils.isEmpty(depts)) {
-                throw new ServiceException("没有权限访问部门数据！");
-            }
-        }
+        ReactiveSecurityUtils.getUserId()
+                .filter(SysUser::isNotAdmin)
+                .subscribe(__ -> {
+                    if (StringUtils.isNotNull(deptId)) {
+                        SysDept dept = new SysDept();
+                        dept.setDeptId(deptId);
+                        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
+                        if (StringUtils.isEmpty(depts)) {
+                            throw new ServiceException("没有权限访问部门数据！");
+                        }
+                    }
+                });
     }
 
 }

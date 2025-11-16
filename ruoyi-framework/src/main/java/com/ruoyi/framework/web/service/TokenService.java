@@ -2,12 +2,12 @@ package com.ruoyi.framework.web.service;
 
 import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.ip.AddressUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.uuid.IdUtils;
 import com.ruoyi.framework.redis.ReactiveRedisUtils;
+import com.ruoyi.framework.security.LoginUser;
 import com.ruoyi.framework.web.ReactiveRequestContextHolder;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;

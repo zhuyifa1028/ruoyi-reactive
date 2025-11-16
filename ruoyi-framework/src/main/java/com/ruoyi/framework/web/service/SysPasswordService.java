@@ -4,8 +4,8 @@ import com.ruoyi.common.constant.CacheConstants;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.user.UserPasswordNotMatchException;
 import com.ruoyi.common.exception.user.UserPasswordRetryLimitExceedException;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.framework.redis.ReactiveRedisUtils;
+import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.framework.security.context.AuthenticationContextHolder;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,7 +67,7 @@ public class SysPasswordService {
     }
 
     public boolean matches(SysUser user, String rawPassword) {
-        return SecurityUtils.matchesPassword(rawPassword, user.getPassword());
+        return ReactiveSecurityUtils.matchesPassword(rawPassword, user.getPassword());
     }
 
     public void clearLoginRecordCache(String loginName) {

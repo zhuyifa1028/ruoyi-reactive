@@ -5,16 +5,16 @@ import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.TreeselectUtils;
+import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.system.dto.SysUserDTO;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.query.SysUserQuery;
 import com.ruoyi.system.service.SysDeptService;
-import com.ruoyi.system.service.SysPostService;
 import com.ruoyi.system.service.SysRoleService;
 import com.ruoyi.system.service.SysUserService;
 import com.ruoyi.system.vo.SysDeptVO;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Tag(name = "用户表 接口")
 @RestController
@@ -43,9 +44,6 @@ public class SysUserController extends BaseController {
 
     @Resource
     private SysDeptService deptService;
-
-    @Resource
-    private SysPostService postService;
 
     @Operation(summary = "根据条件分页查询用户列表")
     @PreAuthorize("@ss.hasPermi('system:user:list')")
@@ -101,11 +99,14 @@ public class SysUserController extends BaseController {
     @PreAuthorize("@ss.hasPermi('system:user:remove')")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{userIds}")
-    public AjaxResult remove(@PathVariable Long[] userIds) {
-        if (ArrayUtils.contains(userIds, getUserId())) {
-            return error("当前用户不能删除");
-        }
-        return toAjax(sysUserService.deleteUserByIds(userIds));
+    public Mono<AjaxResult> remove(@PathVariable Long[] userIds) {
+        return ReactiveSecurityUtils.getUserId()
+                .map(userId -> {
+                    if (ArrayUtils.contains(userIds, userId)) {
+                        return error("当前用户不能删除");
+                    }
+                    return toAjax(sysUserService.deleteUserByIds(userIds));
+                });
     }
 
     /**
@@ -117,8 +118,7 @@ public class SysUserController extends BaseController {
     public AjaxResult resetPwd(@RequestBody SysUser user) {
         sysUserService.checkUserAllowed(user);
         sysUserService.checkUserDataScope(user.getUserId());
-        user.setPassword(SecurityUtils.encryptPassword(user.getPassword()));
-        user.setUpdateBy(getUsername());
+        user.setPassword(ReactiveSecurityUtils.encryptPassword(user.getPassword()));
         return toAjax(sysUserService.resetPwd(user));
     }
 
@@ -131,7 +131,6 @@ public class SysUserController extends BaseController {
     public AjaxResult changeStatus(@RequestBody SysUser user) {
         sysUserService.checkUserAllowed(user);
         sysUserService.checkUserDataScope(user.getUserId());
-        user.setUpdateBy(getUsername());
         return toAjax(sysUserService.updateUserStatus(user));
     }
 
@@ -140,13 +139,15 @@ public class SysUserController extends BaseController {
      */
     @PreAuthorize("@ss.hasPermi('system:user:query')")
     @GetMapping("/authRole/{userId}")
-    public AjaxResult authRole(@PathVariable("userId") Long userId) {
+    public Mono<AjaxResult> authRole(@PathVariable("userId") Long userId) {
         AjaxResult ajax = AjaxResult.success();
-//        SysUser user = sysUserService.selectUserById(userId);
-//        List<SysRole> roles = roleService.selectRolesByUserId(userId);
-//        ajax.put("user", user);
-//        ajax.put("roles", SysUser.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
-        return ajax;
+        return sysUserService.selectUserById(userId)
+                .map(user -> {
+                    List<SysRole> roles = roleService.selectRolesByUserId(userId);
+                    ajax.put("user", user);
+                    ajax.put("roles", SysUser.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
+                    return ajax;
+                });
     }
 
     /**

@@ -4,19 +4,18 @@ import com.alibaba.fastjson2.JSON;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessStatus;
 import com.ruoyi.common.enums.HttpMethod;
 import com.ruoyi.common.filter.PropertyPreExcludeFilter;
 import com.ruoyi.common.utils.ExceptionUtil;
 import com.ruoyi.common.utils.LogUtils;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.ip.AddressUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
+import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.system.domain.SysLogininfor;
 import com.ruoyi.system.domain.SysOperLog;
 import com.ruoyi.system.service.ISysLogininforService;
@@ -105,19 +104,22 @@ public class AsyncFactoryImpl implements AsyncFactory {
      * 操作日志记录
      */
     public TimerTask recordOper(final JoinPoint joinPoint, Log controllerLog, final Exception e, Object jsonResult, ServerWebExchange exchange, long costTime) {
-        // 获取当前的用户
-        LoginUser loginUser = SecurityUtils.getLoginUser();
-
         // *========数据库日志=========*//
         SysOperLog operLog = new SysOperLog();
         operLog.setStatus(BusinessStatus.SUCCESS.ordinal());
-        if (loginUser != null) {
-            operLog.setOperName(loginUser.getUsername());
-            SysUser currentUser = loginUser.getUser();
-            if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
-                operLog.setDeptName(currentUser.getDept().getDeptName());
-            }
-        }
+
+        // 获取当前的用户
+        ReactiveSecurityUtils.getLoginUser()
+                .subscribe(loginUser -> {
+                    if (loginUser != null) {
+                        operLog.setOperName(loginUser.getUsername());
+                        SysUser currentUser = loginUser.getUser();
+                        if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
+                            operLog.setDeptName(currentUser.getDept().getDeptName());
+                        }
+                    }
+                });
+
 
         if (e != null) {
             operLog.setStatus(BusinessStatus.FAIL.ordinal());

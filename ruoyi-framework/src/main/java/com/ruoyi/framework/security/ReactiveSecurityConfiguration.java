@@ -1,7 +1,7 @@
-package com.ruoyi.framework.config;
+package com.ruoyi.framework.security;
 
 import com.ruoyi.framework.config.properties.PermitAllUrlProperties;
-import com.ruoyi.framework.security.filter.JwtAuthenticationTokenFilter;
+import com.ruoyi.framework.security.filter.JwtAuthenticationWebFilter;
 import com.ruoyi.framework.security.handle.AuthenticationEntryPointImpl;
 import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 import jakarta.annotation.Resource;
@@ -18,12 +18,13 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 
 /**
- * spring security配置
+ * 响应式安全配置
  *
- * @author ruoyi
+ * @author bugout
+ * @version 2025-11-11
  */
 @Configuration
-public class SecurityConfig {
+public class ReactiveSecurityConfiguration {
 
     /**
      * 认证失败处理类
@@ -41,13 +42,13 @@ public class SecurityConfig {
      * token认证过滤器
      */
     @Resource
-    private JwtAuthenticationTokenFilter authenticationTokenFilter;
+    private JwtAuthenticationWebFilter authenticationWebFilter;
 
     /**
      * 跨域过滤器
      */
     @Resource
-    private CorsWebFilter corsFilter;
+    private CorsWebFilter corsWebFilter;
 
     /**
      * 允许匿名访问的地址
@@ -103,9 +104,9 @@ public class SecurityConfig {
                 // 添加Logout filter
                 .logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler))
                 // 添加JWT filter
-                .addFilterBefore(authenticationTokenFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterBefore(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 // 添加CORS filter
-                .addFilterBefore(corsFilter, SecurityWebFiltersOrder.CORS)
+                .addFilterBefore(corsWebFilter, SecurityWebFiltersOrder.CORS)
                 .build();
     }
 

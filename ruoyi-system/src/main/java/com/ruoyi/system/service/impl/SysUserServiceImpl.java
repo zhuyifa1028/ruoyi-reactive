@@ -4,7 +4,6 @@ import com.ruoyi.common.annotation.DataScope;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
@@ -108,7 +107,7 @@ public class SysUserServiceImpl implements SysUserService {
                 .then(Mono.defer(() -> {
                     // 保存用户信息
                     com.ruoyi.system.entity.SysUser user = sysUserConverter.toSysUser(dto);
-                    user.setPassword(SecurityUtils.encryptPassword(user.getPassword()));
+                    user.setPassword(ReactiveSecurityUtils.encryptPassword(user.getPassword()));
                     return sysUserRepository.save(user)
                             // 返回用户ID
                             .map(com.ruoyi.system.entity.SysUser::getUserId);
@@ -218,7 +217,7 @@ public class SysUserServiceImpl implements SysUserService {
                             .then(Mono.defer(() -> {
                                 // 保存用户信息
                                 sysUserConverter.copyProperties(dto, user);
-                                user.setPassword(SecurityUtils.encryptPassword(dto.getPassword()));
+                                user.setPassword(ReactiveSecurityUtils.encryptPassword(dto.getPassword()));
                                 return sysUserRepository.save(user);
                             }))
                             .then(Mono.defer(() -> {

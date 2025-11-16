@@ -1,11 +1,11 @@
 package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.domain.model.LoginUser;
 import com.ruoyi.common.enums.UserStatus;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.StringUtils;
+import com.ruoyi.framework.security.LoginUser;
 import com.ruoyi.framework.web.service.SysPasswordService;
 import com.ruoyi.system.service.SysUserService;
 import jakarta.annotation.Resource;
