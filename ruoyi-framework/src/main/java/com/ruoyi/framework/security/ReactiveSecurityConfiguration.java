@@ -98,6 +98,7 @@ public class ReactiveSecurityConfiguration {
                             // 静态资源，可匿名访问
                             .pathMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                             .pathMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
+                            .pathMatchers("/doc.html", "/webjars/**").permitAll()
                             // 除上面外的所有请求全部需要鉴权认证
                             .anyExchange().authenticated();
                 })

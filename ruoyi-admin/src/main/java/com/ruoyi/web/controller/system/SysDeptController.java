@@ -38,7 +38,7 @@ public class SysDeptController extends BaseController {
     @Operation(summary = "查询部门列表（排除指定节点）")
     @PreAuthorize("@ss.hasPermi('system:dept:list')")
     @GetMapping("/list/exclude/{deptId}")
-    public Mono<R<List<SysDeptVO>>> excludeChild(@PathVariable(value = "deptId", required = false) Long deptId) {
+    public Mono<R<List<SysDeptVO>>> excludeChild(@PathVariable Long deptId) {
         return deptService.selectDeptListExclude(deptId)
                 .collectList()
                 .map(R::ok);
