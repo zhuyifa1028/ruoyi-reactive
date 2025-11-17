@@ -6,10 +6,10 @@
         <pane size="16">
           <el-col>
             <div class="head-container">
-              <el-input v-model="deptName" placeholder="请输入部门名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px"/>
+              <el-input v-model="deptName" placeholder="请输入部门名称" clearable size="small" prefix-icon="el-icon-search" style="margin-bottom: 20px" />
             </div>
             <div class="head-container">
-              <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" node-key="id" default-expand-all highlight-current @node-click="handleNodeClick"/>
+              <el-tree :data="deptOptions" :props="defaultProps" :expand-on-click-node="false" :filter-node-method="filterNode" ref="tree" node-key="deptId" default-expand-all highlight-current @node-click="handleNodeClick" />
             </div>
           </el-col>
         </pane>
@@ -18,14 +18,14 @@
           <el-col>
             <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
               <el-form-item label="用户名称" prop="userName">
-                <el-input v-model="queryParams.userName" placeholder="请输入用户名称" clearable style="width: 240px" @keyup.enter.native="handleQuery"/>
+                <el-input v-model="queryParams.userName" placeholder="请输入用户名称" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
               </el-form-item>
               <el-form-item label="手机号码" prop="phonenumber">
-                <el-input v-model="queryParams.phonenumber" placeholder="请输入手机号码" clearable style="width: 240px" @keyup.enter.native="handleQuery"/>
+                <el-input v-model="queryParams.phonenumber" placeholder="请输入手机号码" clearable style="width: 240px" @keyup.enter.native="handleQuery" />
               </el-form-item>
               <el-form-item label="状态" prop="status">
                 <el-select v-model="queryParams.status" placeholder="用户状态" clearable style="width: 240px">
-                  <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value"/>
+                  <el-option v-for="dict in dict.type.sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
                 </el-select>
               </el-form-item>
               <el-form-item label="创建时间">
@@ -57,12 +57,12 @@
             </el-row>
 
             <el-table v-loading="loading" :data="userList" @selection-change="handleSelectionChange">
-              <el-table-column type="selection" width="50" align="center"/>
-              <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns.userId.visible"/>
-              <el-table-column label="用户名称" align="center" key="userName" prop="userName" v-if="columns.userName.visible" :show-overflow-tooltip="true"/>
-              <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true"/>
-              <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true"/>
-              <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120"/>
+              <el-table-column type="selection" width="50" align="center" />
+              <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns.userId.visible" />
+              <el-table-column label="用户名称" align="center" key="userName" prop="userName" v-if="columns.userName.visible" :show-overflow-tooltip="true" />
+              <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
+              <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
+              <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
               <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
                 <template slot-scope="scope">
                   <el-switch v-model="scope.row.status" active-value="0" inactive-value="1" @change="handleStatusChange(scope.row)"></el-switch>
@@ -88,7 +88,7 @@
               </el-table-column>
             </el-table>
 
-            <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList"/>
+            <pagination v-show="total > 0" :total="total" :page.sync="queryParams.pageNum" :limit.sync="queryParams.pageSize" @pagination="getList" />
           </el-col>
         </pane>
       </splitpanes>
@@ -100,36 +100,36 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="用户昵称" prop="nickName">
-              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30"/>
+              <el-input v-model="form.nickName" placeholder="请输入用户昵称" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="归属部门" prop="deptId">
-              <treeselect v-model="form.deptId" :options="enabledDeptOptions" :show-count="true" placeholder="请选择归属部门"/>
+              <treeselect v-model="form.deptId" :options="enabledDeptOptions" :normalizer="(node) => { return { 'id': node.deptId, 'label': node.deptName, 'children': node.children, }}" :show-count="true" placeholder="请选择归属部门" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
             <el-form-item label="手机号码" prop="phonenumber">
-              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" maxlength="11"/>
+              <el-input v-model="form.phonenumber" placeholder="请输入手机号码" maxlength="11" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50"/>
+              <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
             <el-form-item v-if="form.userId == undefined" label="用户名称" prop="userName">
-              <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30"/>
+              <el-input v-model="form.userName" placeholder="请输入用户名称" maxlength="30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item v-if="form.userId == undefined" label="用户密码" prop="password">
-              <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password/>
+              <el-input v-model="form.password" placeholder="请输入用户密码" type="password" maxlength="20" show-password />
             </el-form-item>
           </el-col>
         </el-row>
@@ -186,7 +186,7 @@
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
         <div class="el-upload__tip text-center" slot="tip">
           <div class="el-upload__tip" slot="tip">
-            <el-checkbox v-model="upload.updateSupport"/>
+            <el-checkbox v-model="upload.updateSupport" />
             是否更新已经存在的用户数据
           </div>
           <span>仅允许导入xls、xlsx格式文件。</span>
@@ -202,17 +202,19 @@
 </template>
 
 <script>
-import {listUser, getUser, delUser, addUser, updateUser, resetUserPwd, changeUserStatus, deptTreeSelect} from "@/api/system/user"
-import {getToken} from "@/utils/auth"
+import { addUser, changeUserStatus, delUser, deptTreeSelect, getUser, listUser, resetUserPwd, updateUser } from "@/api/system/user"
+import { getToken } from "@/utils/auth"
 import Treeselect from "@riophae/vue-treeselect"
 import "@riophae/vue-treeselect/dist/vue-treeselect.css"
-import {Splitpanes, Pane} from "splitpanes"
+import { Pane, Splitpanes } from "splitpanes"
 import "splitpanes/dist/splitpanes.css"
+import { optionselectPost } from "@/api/system/post";
+import { optionselectRole } from "@/api/system/role";
 
 export default {
   name: "User",
   dicts: ['sys_normal_disable', 'sys_user_sex'],
-  components: {Treeselect, Splitpanes, Pane},
+  components: { Treeselect, Splitpanes, Pane },
   data() {
     return {
       // 遮罩层
@@ -251,7 +253,7 @@ export default {
       form: {},
       defaultProps: {
         children: "children",
-        label: "label"
+        label: "deptName"
       },
       // 用户导入参数
       upload: {
@@ -264,7 +266,7 @@ export default {
         // 是否更新已经存在的用户数据
         updateSupport: 0,
         // 设置上传的请求头部
-        headers: {Authorization: "Bearer " + getToken()},
+        headers: { Authorization: "Bearer " + getToken() },
         // 上传的地址
         url: process.env.VUE_APP_BASE_API + "/system/user/importData"
       },
@@ -279,27 +281,27 @@ export default {
       },
       // 列信息
       columns: {
-        userId: {label: '用户编号', visible: true},
-        userName: {label: '用户名称', visible: true},
-        nickName: {label: '用户昵称', visible: true},
-        deptName: {label: '部门', visible: true},
-        phonenumber: {label: '手机号码', visible: true},
-        status: {label: '状态', visible: true},
-        createTime: {label: '创建时间', visible: true}
+        userId: { label: '用户编号', visible: true },
+        userName: { label: '用户名称', visible: true },
+        nickName: { label: '用户昵称', visible: true },
+        deptName: { label: '部门', visible: true },
+        phonenumber: { label: '手机号码', visible: true },
+        status: { label: '状态', visible: true },
+        createTime: { label: '创建时间', visible: true }
       },
       // 表单校验
       rules: {
         userName: [
-          {required: true, message: "用户名称不能为空", trigger: "blur"},
-          {min: 2, max: 20, message: '用户名称长度必须介于 2 和 20 之间', trigger: 'blur'}
+          { required: true, message: "用户名称不能为空", trigger: "blur" },
+          { min: 2, max: 20, message: '用户名称长度必须介于 2 和 20 之间', trigger: 'blur' }
         ],
         nickName: [
-          {required: true, message: "用户昵称不能为空", trigger: "blur"}
+          { required: true, message: "用户昵称不能为空", trigger: "blur" }
         ],
         password: [
-          {required: true, message: "用户密码不能为空", trigger: "blur"},
-          {min: 5, max: 20, message: '用户密码长度必须介于 5 和 20 之间', trigger: 'blur'},
-          {pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur"}
+          { required: true, message: "用户密码不能为空", trigger: "blur" },
+          { min: 5, max: 20, message: '用户密码长度必须介于 5 和 20 之间', trigger: 'blur' },
+          { pattern: /^[^<>"'|\\]+$/, message: "不能包含非法字符：< > \" ' \\\ |", trigger: "blur" }
         ],
         email: [
           {
@@ -327,6 +329,8 @@ export default {
   created() {
     this.getList()
     this.getDeptTree()
+    this.getOptionselectPost()
+    this.getOptionselectRole()
     this.getConfigKey("sys.user.initPassword").then(response => {
       this.initPassword = response.msg
     })
@@ -347,6 +351,16 @@ export default {
       deptTreeSelect().then(response => {
         this.deptOptions = response.data
         this.enabledDeptOptions = this.filterDisabledDept(JSON.parse(JSON.stringify(response.data)))
+      })
+    },
+    getOptionselectPost() {
+      optionselectPost().then(response => {
+        this.postOptions = response.data
+      })
+    },
+    getOptionselectRole() {
+      optionselectRole().then(response => {
+        this.roleOptions = response.data
       })
     },
     // 过滤禁用的部门
@@ -440,13 +454,9 @@ export default {
     /** 新增按钮操作 */
     handleAdd() {
       this.reset()
-      getUser().then(response => {
-        this.postOptions = response.posts
-        this.roleOptions = response.roles
-        this.open = true
-        this.title = "添加用户"
-        this.form.password = this.initPassword
-      })
+      this.open = true
+      this.title = "添加用户"
+      this.form.password = this.initPassword
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
@@ -454,10 +464,6 @@ export default {
       const userId = row.userId || this.ids
       getUser(userId).then(response => {
         this.form = response.data
-        this.postOptions = response.posts
-        this.roleOptions = response.roles
-        this.$set(this.form, "postIds", response.postIds)
-        this.$set(this.form, "roleIds", response.roleIds)
         this.open = true
         this.title = "修改用户"
         this.form.password = ""
@@ -476,7 +482,7 @@ export default {
             return "不能包含非法字符：< > \" ' \\\ |"
           }
         },
-      }).then(({value}) => {
+      }).then(({ value }) => {
         resetUserPwd(row.userId, value).then(response => {
           this.$modal.msgSuccess("修改成功，新密码是：" + value)
         })
@@ -543,7 +549,7 @@ export default {
       this.upload.open = false
       this.upload.isUploading = false
       this.$refs.upload.clearFiles()
-      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", {dangerouslyUseHTMLString: true})
+      this.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true })
       this.getList()
     },
     // 提交上传文件
@@ -555,6 +561,6 @@ export default {
       }
       this.$refs.upload.submit()
     }
-  }
+  },
 }
 </script>

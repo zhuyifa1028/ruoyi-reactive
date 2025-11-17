@@ -42,3 +42,11 @@ export function delPost(postId) {
     method: 'delete'
   })
 }
+
+// 查询岗位选择框列表
+export function optionselectPost() {
+  return request({
+    url: '/system/post/optionselect',
+    method: 'get'
+  })
+}

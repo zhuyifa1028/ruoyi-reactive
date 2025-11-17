@@ -117,3 +117,11 @@ export function deptTreeSelect(roleId) {
     method: 'get'
   })
 }
+
+// 获取角色选择框列表
+export function optionselectRole() {
+  return request({
+    url: '/system/role/optionselect',
+    method: 'get'
+  })
+}
