@@ -46,7 +46,7 @@ public class SysUserController extends BaseController {
     private SysDeptService deptService;
 
     @Operation(summary = "根据条件分页查询用户列表")
-    @PreAuthorize("@ss.hasPermi('system:user:list')")
+    @PreAuthorize("hasAuthority('system:user:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysUserQuery query) {
         return sysUserService.selectUserList(query)
@@ -61,7 +61,7 @@ public class SysUserController extends BaseController {
     }
 
     @Operation(summary = "根据用户ID查询用户信息")
-    @PreAuthorize("@ss.hasPermi('system:user:query')")
+    @PreAuthorize("hasAuthority('system:user:query')")
     @GetMapping("/{userId}")
     public Mono<R<SysUserVO>> getInfo(@PathVariable Long userId) {
         sysUserService.checkUserDataScope(userId);
@@ -70,8 +70,8 @@ public class SysUserController extends BaseController {
     }
 
     @Operation(summary = "新增用户")
-    @Log(title = "用户管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:user:add')")
+//    @Log(title = "用户管理", businessType = BusinessType.INSERT)
+    @PreAuthorize("hasAuthority('system:user:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysUserDTO dto) {
         deptService.checkDeptDataScope(dto.getDeptId());
@@ -82,7 +82,7 @@ public class SysUserController extends BaseController {
 
     @Operation(summary = "修改用户")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("hasAuthority('system:user:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysUserDTO dto) {
         sysUserService.checkUserAllowed(new SysUser(dto.getUserId()));
@@ -96,7 +96,7 @@ public class SysUserController extends BaseController {
     /**
      * 删除用户
      */
-    @PreAuthorize("@ss.hasPermi('system:user:remove')")
+    @PreAuthorize("hasAuthority('system:user:remove')")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)
     @DeleteMapping("/{userIds}")
     public Mono<AjaxResult> remove(@PathVariable Long[] userIds) {
@@ -112,7 +112,7 @@ public class SysUserController extends BaseController {
     /**
      * 重置密码
      */
-    @PreAuthorize("@ss.hasPermi('system:user:resetPwd')")
+    @PreAuthorize("hasAuthority('system:user:resetPwd')")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @PutMapping("/resetPwd")
     public AjaxResult resetPwd(@RequestBody SysUser user) {
@@ -125,7 +125,7 @@ public class SysUserController extends BaseController {
     /**
      * 状态修改
      */
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("hasAuthority('system:user:edit')")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public AjaxResult changeStatus(@RequestBody SysUser user) {
@@ -137,7 +137,7 @@ public class SysUserController extends BaseController {
     /**
      * 根据用户编号获取授权角色
      */
-    @PreAuthorize("@ss.hasPermi('system:user:query')")
+    @PreAuthorize("hasAuthority('system:user:query')")
     @GetMapping("/authRole/{userId}")
     public Mono<AjaxResult> authRole(@PathVariable("userId") Long userId) {
         AjaxResult ajax = AjaxResult.success();
@@ -153,7 +153,7 @@ public class SysUserController extends BaseController {
     /**
      * 用户授权角色
      */
-    @PreAuthorize("@ss.hasPermi('system:user:edit')")
+    @PreAuthorize("hasAuthority('system:user:edit')")
     @Log(title = "用户管理", businessType = BusinessType.GRANT)
     @PutMapping("/authRole")
     public AjaxResult insertAuthRole(Long userId, List<Long> roleIds) {
@@ -164,7 +164,7 @@ public class SysUserController extends BaseController {
     }
 
     @Operation(summary = "获取部门下拉树列表")
-    @PreAuthorize("@ss.hasPermi('system:user:list')")
+    @PreAuthorize("hasAuthority('system:user:list')")
     @GetMapping("/deptTree")
     public Mono<R<List<SysDeptVO>>> deptTree(SysDeptQuery query) {
         return deptService.selectDeptList(query)

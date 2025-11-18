@@ -43,7 +43,7 @@ public class SysRoleController extends BaseController {
     private SysDeptService deptService;
 
     @Operation(summary = "根据条件分页查询角色列表")
-    @PreAuthorize("@ss.hasPermi('system:role:list')")
+    @PreAuthorize("hasAuthority('system:role:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysRoleQuery query) {
         return sysRoleService.selectRoleList(query)
@@ -58,7 +58,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "通过角色ID查询角色信息")
-    @PreAuthorize("@ss.hasPermi('system:role:query')")
+    @PreAuthorize("hasAuthority('system:role:query')")
     @GetMapping(value = "/{roleId}")
     public Mono<R<SysRoleVO>> getInfo(@PathVariable Long roleId) {
         sysRoleService.checkRoleDataScope(roleId);
@@ -68,7 +68,7 @@ public class SysRoleController extends BaseController {
 
     @Operation(summary = "新增角色")
     @Log(title = "角色管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:role:add')")
+    @PreAuthorize("hasAuthority('system:role:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysRoleDTO dto) {
         return sysRoleService.insertRole(dto)
@@ -77,7 +77,7 @@ public class SysRoleController extends BaseController {
 
     @Operation(summary = "修改角色")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:role:edit')")
+    @PreAuthorize("hasAuthority('system:role:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysRoleDTO dto) {
         sysRoleService.checkRoleAllowed(new SysRole(dto.getRoleId()));
@@ -87,7 +87,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "修改角色状态")
-    @PreAuthorize("@ss.hasPermi('system:role:edit')")
+    @PreAuthorize("hasAuthority('system:role:edit')")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
     @PutMapping("/changeStatus")
     public Mono<R<Void>> changeStatus(@RequestBody SysRoleDTO dto) {
@@ -98,7 +98,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "获取对应角色部门树列表")
-    @PreAuthorize("@ss.hasPermi('system:role:query')")
+    @PreAuthorize("hasAuthority('system:role:query')")
     @GetMapping(value = "/deptTree/{roleId}")
     public Mono<AjaxResult> deptTree(@PathVariable("roleId") Long roleId) {
         return deptService.selectDeptList(new SysDeptQuery())
@@ -120,7 +120,7 @@ public class SysRoleController extends BaseController {
 
     @Operation(summary = "修改角色数据权限")
     @Log(title = "角色管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:role:edit')")
+    @PreAuthorize("hasAuthority('system:role:edit')")
     @PutMapping("/dataScope")
     public Mono<R<Void>> dataScope(@RequestBody SysRoleDTO dto) {
         sysRoleService.checkRoleAllowed(new SysRole(dto.getRoleId()));
@@ -130,7 +130,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "根据条件分页查询已分配用户角色列表")
-    @PreAuthorize("@ss.hasPermi('system:role:list')")
+    @PreAuthorize("hasAuthority('system:role:list')")
     @GetMapping("/authUser/allocatedList")
     public TableDataInfo allocatedList(SysUser user) {
         startPage();
@@ -139,7 +139,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "根据条件分页查询未分配用户角色列表")
-    @PreAuthorize("@ss.hasPermi('system:role:list')")
+    @PreAuthorize("hasAuthority('system:role:list')")
     @GetMapping("/authUser/unallocatedList")
     public TableDataInfo unallocatedList(SysUser user) {
         startPage();
@@ -148,7 +148,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "批量授权用户角色")
-    @PreAuthorize("@ss.hasPermi('system:role:edit')")
+    @PreAuthorize("hasAuthority('system:role:edit')")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
     @PutMapping("/authUser/selectAll")
     public Mono<R<Void>> selectAuthUserAll(Long roleId, Long[] userIds) {
@@ -158,7 +158,7 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "批量取消授权用户角色")
-    @PreAuthorize("@ss.hasPermi('system:role:edit')")
+    @PreAuthorize("hasAuthority('system:role:edit')")
     @Log(title = "角色管理", businessType = BusinessType.GRANT)
     @PutMapping("/authUser/cancelAll")
     public Mono<R<Void>> cancelAuthUserAll(Long roleId, Long[] userIds) {
@@ -168,7 +168,7 @@ public class SysRoleController extends BaseController {
 
     @Operation(summary = "批量删除角色")
     @Log(title = "角色管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:role:remove')")
+    @PreAuthorize("hasAuthority('system:role:remove')")
     @DeleteMapping("/{roleIds}")
     public Mono<R<Void>> remove(@PathVariable List<Long> roleIds) {
         return sysRoleService.deleteRoleByIds(roleIds)
@@ -176,10 +176,10 @@ public class SysRoleController extends BaseController {
     }
 
     @Operation(summary = "获取角色选择框列表")
-    @PreAuthorize("@ss.hasPermi('system:role:query')")
+    @PreAuthorize("hasAuthority('system:role:query')")
     @GetMapping("/optionselect")
-    public AjaxResult optionselect() {
-        return success(sysRoleService.selectRoleList(new SysRole()));
+    public Mono<AjaxResult> optionselect() {
+        return Mono.just(success(sysRoleService.selectRoleList(new SysRole())));
     }
 
 }

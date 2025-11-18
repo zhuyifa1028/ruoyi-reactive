@@ -223,7 +223,7 @@
             <el-form-item prop="perms">
               <el-input v-model="form.perms" placeholder="请输入权限标识" maxlength="100"/>
               <span slot="label">
-                <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`@ss.hasPermi('system:user:list')`)" placement="top">
+                <el-tooltip content="控制器中定义的权限字符，如：@PreAuthorize(`hasAuthority('system:user:list')`)" placement="top">
                 <i class="el-icon-question"></i>
                 </el-tooltip>
                 权限字符
@@ -306,7 +306,7 @@
 </template>
 
 <script>
-import {addMenu, delMenu, getMenu, listMenu, updateMenu} from "@/api/system/menu"
+import { addMenu, delMenu, getMenu, listMenu, updateMenu } from "@/api/system/menu"
 import Treeselect from "@riophae/vue-treeselect"
 import "@riophae/vue-treeselect/dist/vue-treeselect.css"
 import IconSelect from "@/components/IconSelect"

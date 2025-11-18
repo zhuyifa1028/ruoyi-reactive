@@ -28,7 +28,7 @@ public class SysConfigController extends BaseController {
     private SysConfigService sysConfigService;
 
     @Operation(summary = "获取配置列表")
-    @PreAuthorize("@ss.hasPermi('system:config:list')")
+    @PreAuthorize("hasAuthority('system:config:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysConfigQuery query) {
         return sysConfigService.selectConfigList(query)
@@ -43,7 +43,7 @@ public class SysConfigController extends BaseController {
     }
 
     @Operation(summary = "根据配置编号获取详细信息")
-    @PreAuthorize("@ss.hasPermi('system:config:query')")
+    @PreAuthorize("hasAuthority('system:config:query')")
     @GetMapping(value = "/{configId}")
     public Mono<AjaxResult> getInfo(@PathVariable Long configId) {
         return sysConfigService.selectConfigById(configId)
@@ -59,7 +59,7 @@ public class SysConfigController extends BaseController {
 
     @Operation(summary = "新增配置")
     @Log(title = "配置管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:config:add')")
+    @PreAuthorize("hasAuthority('system:config:add')")
     @PostMapping
     public Mono<AjaxResult> add(@Validated @RequestBody SysConfigDTO dto) {
         return sysConfigService.insertConfig(dto)
@@ -68,7 +68,7 @@ public class SysConfigController extends BaseController {
 
     @Operation(summary = "修改配置")
     @Log(title = "配置管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    @PreAuthorize("hasAuthority('system:config:edit')")
     @PutMapping
     public Mono<AjaxResult> edit(@Validated @RequestBody SysConfigDTO dto) {
         return sysConfigService.updateConfig(dto)
@@ -77,7 +77,7 @@ public class SysConfigController extends BaseController {
 
     @Operation(summary = "批量删除配置")
     @Log(title = "配置管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:config:remove')")
+    @PreAuthorize("hasAuthority('system:config:remove')")
     @DeleteMapping("/{configIds}")
     public Mono<AjaxResult> remove(@PathVariable List<Long> configIds) {
         return sysConfigService.deleteConfigByIds(configIds)
@@ -86,7 +86,7 @@ public class SysConfigController extends BaseController {
 
     @Operation(summary = "刷新配置缓存")
     @Log(title = "配置管理", businessType = BusinessType.CLEAN)
-    @PreAuthorize("@ss.hasPermi('system:config:remove')")
+    @PreAuthorize("hasAuthority('system:config:remove')")
     @DeleteMapping("/refreshCache")
     public Mono<AjaxResult> refreshCache() {
         return sysConfigService.resetConfigCache()

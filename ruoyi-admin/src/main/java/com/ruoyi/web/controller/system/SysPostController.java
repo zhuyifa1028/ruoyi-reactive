@@ -29,7 +29,7 @@ public class SysPostController extends BaseController {
     private SysPostService sysPostService;
 
     @Operation(summary = "查询岗位列表")
-    @PreAuthorize("@ss.hasPermi('system:post:list')")
+    @PreAuthorize("hasAuthority('system:post:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysPostQuery query) {
         return sysPostService.selectPostList(query)
@@ -44,7 +44,7 @@ public class SysPostController extends BaseController {
     }
 
     @Operation(summary = "通过岗位ID查询岗位信息")
-    @PreAuthorize("@ss.hasPermi('system:post:query')")
+    @PreAuthorize("hasAuthority('system:post:query')")
     @GetMapping(value = "/{postId}")
     public Mono<R<SysPostVO>> getInfo(@PathVariable Long postId) {
         return sysPostService.selectPostById(postId)
@@ -53,7 +53,7 @@ public class SysPostController extends BaseController {
 
     @Operation(summary = "新增岗位")
     @Log(title = "岗位管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:post:add')")
+    @PreAuthorize("hasAuthority('system:post:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysPostDTO dto) {
         return sysPostService.insertPost(dto)
@@ -62,7 +62,7 @@ public class SysPostController extends BaseController {
 
     @Operation(summary = "修改岗位")
     @Log(title = "岗位管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:post:edit')")
+    @PreAuthorize("hasAuthority('system:post:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysPostDTO dto) {
         return sysPostService.updatePost(dto)
@@ -71,7 +71,7 @@ public class SysPostController extends BaseController {
 
     @Operation(summary = "批量删除岗位")
     @Log(title = "岗位管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:post:remove')")
+    @PreAuthorize("hasAuthority('system:post:remove')")
     @DeleteMapping("/{postIds}")
     public Mono<R<Void>> remove(@PathVariable List<Long> postIds) {
         return sysPostService.deletePostByIds(postIds)

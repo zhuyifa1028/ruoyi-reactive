@@ -25,7 +25,7 @@ public class SysOperlogController extends BaseController {
     @Resource
     private ISysOperLogService operLogService;
 
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:list')")
+    @PreAuthorize("hasAuthority('monitor:operlog:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysOperLog operLog) {
         startPage();
@@ -34,14 +34,14 @@ public class SysOperlogController extends BaseController {
     }
 
     @Log(title = "操作日志", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
+    @PreAuthorize("hasAuthority('monitor:operlog:remove')")
     @DeleteMapping("/{operIds}")
     public AjaxResult remove(@PathVariable Long[] operIds) {
         return toAjax(operLogService.deleteOperLogByIds(operIds));
     }
 
     @Log(title = "操作日志", businessType = BusinessType.CLEAN)
-    @PreAuthorize("@ss.hasPermi('monitor:operlog:remove')")
+    @PreAuthorize("hasAuthority('monitor:operlog:remove')")
     @DeleteMapping("/clean")
     public AjaxResult clean() {
         operLogService.cleanOperLog();

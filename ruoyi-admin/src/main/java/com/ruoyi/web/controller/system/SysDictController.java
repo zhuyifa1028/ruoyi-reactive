@@ -29,7 +29,7 @@ public class SysDictController extends BaseController {
     private SysDictService sysDictService;
 
     @Operation(summary = "根据条件分页查询字典列表")
-    @PreAuthorize("@ss.hasPermi('system:dict:list')")
+    @PreAuthorize("hasAuthority('system:dict:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysDictQuery query) {
         return sysDictService.selectDictList(query)
@@ -52,7 +52,7 @@ public class SysDictController extends BaseController {
     }
 
     @Operation(summary = "根据字典ID查询信息")
-    @PreAuthorize("@ss.hasPermi('system:dict:query')")
+    @PreAuthorize("hasAuthority('system:dict:query')")
     @GetMapping(value = "/{dictCode}")
     public Mono<R<SysDictVO>> getInfo(@PathVariable Long dictCode) {
         return sysDictService.selectDictById(dictCode)
@@ -61,7 +61,7 @@ public class SysDictController extends BaseController {
 
     @Operation(summary = "新增字典")
     @Log(title = "字典管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:dict:add')")
+    @PreAuthorize("hasAuthority('system:dict:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysDictDTO dto) {
         return sysDictService.insertDict(dto)
@@ -70,7 +70,7 @@ public class SysDictController extends BaseController {
 
     @Operation(summary = "修改字典")
     @Log(title = "字典管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:dict:edit')")
+    @PreAuthorize("hasAuthority('system:dict:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysDictDTO dto) {
         return sysDictService.updateDict(dto)
@@ -79,7 +79,7 @@ public class SysDictController extends BaseController {
 
     @Operation(summary = "批量删除字典")
     @Log(title = "字典管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:dict:remove')")
+    @PreAuthorize("hasAuthority('system:dict:remove')")
     @DeleteMapping("/{dictCodes}")
     public Mono<R<Void>> remove(@PathVariable List<Long> dictCodes) {
         return sysDictService.deleteDictByIds(dictCodes)
@@ -87,7 +87,7 @@ public class SysDictController extends BaseController {
     }
 
     @Operation(summary = "刷新字典缓存")
-    @PreAuthorize("@ss.hasPermi('system:dict:remove')")
+    @PreAuthorize("hasAuthority('system:dict:remove')")
     @Log(title = "字典管理", businessType = BusinessType.CLEAN)
     @DeleteMapping("/refreshCache")
     public Mono<R<Void>> refreshCache() {

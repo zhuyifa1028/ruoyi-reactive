@@ -29,7 +29,7 @@ public class SysNoticeController extends BaseController {
     private SysNoticeService noticeService;
 
     @Operation(summary = "查询通告列表")
-    @PreAuthorize("@ss.hasPermi('system:notice:list')")
+    @PreAuthorize("hasAuthority('system:notice:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(SysNoticeQuery notice) {
         return noticeService.selectNoticeList(notice)
@@ -44,7 +44,7 @@ public class SysNoticeController extends BaseController {
     }
 
     @Operation(summary = "根据通告ID查询信息")
-    @PreAuthorize("@ss.hasPermi('system:notice:query')")
+    @PreAuthorize("hasAuthority('system:notice:query')")
     @GetMapping(value = "/{noticeId}")
     public Mono<R<SysNoticeVO>> getInfo(@PathVariable Long noticeId) {
         return noticeService.selectNoticeById(noticeId)
@@ -53,7 +53,7 @@ public class SysNoticeController extends BaseController {
 
     @Operation(summary = "新增通告")
     @Log(title = "通告管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:notice:add')")
+    @PreAuthorize("hasAuthority('system:notice:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysNoticeDTO dto) {
         return noticeService.insertNotice(dto)
@@ -62,7 +62,7 @@ public class SysNoticeController extends BaseController {
 
     @Operation(summary = "修改通告")
     @Log(title = "通告管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:notice:edit')")
+    @PreAuthorize("hasAuthority('system:notice:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysNoticeDTO dto) {
         return noticeService.updateNotice(dto)
@@ -71,7 +71,7 @@ public class SysNoticeController extends BaseController {
 
     @Operation(summary = "批量删除通告")
     @Log(title = "通告管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:notice:remove')")
+    @PreAuthorize("hasAuthority('system:notice:remove')")
     @DeleteMapping("/{noticeIds}")
     public Mono<R<Void>> remove(@PathVariable List<Long> noticeIds) {
         return noticeService.deleteNoticeByIds(noticeIds)

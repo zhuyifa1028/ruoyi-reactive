@@ -29,7 +29,7 @@ public class SysLogininforController extends BaseController {
     @Resource
     private SysPasswordService passwordService;
 
-    @PreAuthorize("@ss.hasPermi('monitor:logininfor:list')")
+    @PreAuthorize("hasAuthority('monitor:logininfor:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysLogininfor logininfor) {
         startPage();
@@ -37,14 +37,14 @@ public class SysLogininforController extends BaseController {
         return getDataTable(list);
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:logininfor:remove')")
+    @PreAuthorize("hasAuthority('monitor:logininfor:remove')")
     @Log(title = "登录日志", businessType = BusinessType.DELETE)
     @DeleteMapping("/{infoIds}")
     public AjaxResult remove(@PathVariable Long[] infoIds) {
         return toAjax(logininforService.deleteLogininforByIds(infoIds));
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:logininfor:remove')")
+    @PreAuthorize("hasAuthority('monitor:logininfor:remove')")
     @Log(title = "登录日志", businessType = BusinessType.CLEAN)
     @DeleteMapping("/clean")
     public AjaxResult clean() {
@@ -52,7 +52,7 @@ public class SysLogininforController extends BaseController {
         return success();
     }
 
-    @PreAuthorize("@ss.hasPermi('monitor:logininfor:unlock')")
+    @PreAuthorize("hasAuthority('monitor:logininfor:unlock')")
     @Log(title = "账户解锁", businessType = BusinessType.OTHER)
     @GetMapping("/unlock/{userName}")
     public AjaxResult unlock(@PathVariable("userName") String userName) {

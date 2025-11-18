@@ -32,7 +32,7 @@ public class SysUserOnlineController extends BaseController {
     @Resource
     private ReactiveRedisUtils<LoginUser> reactiveRedisUtils;
 
-    @PreAuthorize("@ss.hasPermi('monitor:online:list')")
+    @PreAuthorize("hasAuthority('monitor:online:list')")
     @GetMapping("/list")
     public Mono<TableDataInfo> list(String ipaddr, String userName) {
         return reactiveRedisUtils.keys(CacheConstants.LOGIN_TOKEN_KEY + "*")
@@ -62,7 +62,7 @@ public class SysUserOnlineController extends BaseController {
     /**
      * 强退用户
      */
-    @PreAuthorize("@ss.hasPermi('monitor:online:forceLogout')")
+    @PreAuthorize("hasAuthority('monitor:online:forceLogout')")
     @Log(title = "在线用户", businessType = BusinessType.FORCE)
     @DeleteMapping("/{tokenId}")
     public Mono<AjaxResult> forceLogout(@PathVariable String tokenId) {

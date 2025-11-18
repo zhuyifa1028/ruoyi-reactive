@@ -29,7 +29,7 @@ public class SysMenuController extends BaseController {
     private SysMenuService sysMenuService;
 
     @Operation(summary = "查询菜单列表")
-    @PreAuthorize("@ss.hasPermi('system:menu:list')")
+    @PreAuthorize("hasAuthority('system:menu:list')")
     @GetMapping("/list")
     public Mono<R<List<SysMenuVO>>> list(SysMenuQuery query) {
         return sysMenuService.selectMenuList(query)
@@ -38,7 +38,7 @@ public class SysMenuController extends BaseController {
     }
 
     @Operation(summary = "根据菜单ID查询信息")
-    @PreAuthorize("@ss.hasPermi('system:menu:query')")
+    @PreAuthorize("hasAuthority('system:menu:query')")
     @GetMapping(value = "/{menuId}")
     public Mono<R<SysMenuVO>> getInfo(@PathVariable Long menuId) {
         return sysMenuService.selectMenuById(menuId)
@@ -47,7 +47,7 @@ public class SysMenuController extends BaseController {
 
     @Operation(summary = "新增菜单")
     @Log(title = "菜单管理", businessType = BusinessType.INSERT)
-    @PreAuthorize("@ss.hasPermi('system:menu:add')")
+    @PreAuthorize("hasAuthority('system:menu:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysMenuDTO dto) {
         return sysMenuService.insertMenu(dto)
@@ -56,7 +56,7 @@ public class SysMenuController extends BaseController {
 
     @Operation(summary = "修改菜单")
     @Log(title = "菜单管理", businessType = BusinessType.UPDATE)
-    @PreAuthorize("@ss.hasPermi('system:menu:edit')")
+    @PreAuthorize("hasAuthority('system:menu:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysMenuDTO dto) {
         return sysMenuService.updateMenu(dto)
@@ -65,7 +65,7 @@ public class SysMenuController extends BaseController {
 
     @Operation(summary = "删除菜单")
     @Log(title = "菜单管理", businessType = BusinessType.DELETE)
-    @PreAuthorize("@ss.hasPermi('system:menu:remove')")
+    @PreAuthorize("hasAuthority('system:menu:remove')")
     @DeleteMapping("/{menuId}")
     public Mono<R<Void>> remove(@PathVariable Long menuId) {
         return sysMenuService.deleteMenuById(menuId)

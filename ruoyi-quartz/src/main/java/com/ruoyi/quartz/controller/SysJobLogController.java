@@ -28,7 +28,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 查询定时任务调度日志列表
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:list')")
+    @PreAuthorize("hasAuthority('monitor:job:list')")
     @GetMapping("/list")
     public TableDataInfo list(SysJobLog sysJobLog) {
         startPage();
@@ -39,7 +39,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 根据调度编号获取详细信息
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:query')")
+    @PreAuthorize("hasAuthority('monitor:job:query')")
     @GetMapping(value = "/{jobLogId}")
     public AjaxResult getInfo(@PathVariable Long jobLogId) {
         return success(jobLogService.selectJobLogById(jobLogId));
@@ -49,7 +49,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 删除定时任务调度日志
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
+    @PreAuthorize("hasAuthority('monitor:job:remove')")
     @Log(title = "定时任务调度日志", businessType = BusinessType.DELETE)
     @DeleteMapping("/{jobLogIds}")
     public AjaxResult remove(@PathVariable Long[] jobLogIds) {
@@ -59,7 +59,7 @@ public class SysJobLogController extends BaseController {
     /**
      * 清空定时任务调度日志
      */
-    @PreAuthorize("@ss.hasPermi('monitor:job:remove')")
+    @PreAuthorize("hasAuthority('monitor:job:remove')")
     @Log(title = "调度日志", businessType = BusinessType.CLEAN)
     @DeleteMapping("/clean")
     public AjaxResult clean() {
