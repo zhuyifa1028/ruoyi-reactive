@@ -134,8 +134,10 @@ public class LoginUser implements UserDetails {
         return true;
     }
 
+    @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return permissions.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
     }
+
 }

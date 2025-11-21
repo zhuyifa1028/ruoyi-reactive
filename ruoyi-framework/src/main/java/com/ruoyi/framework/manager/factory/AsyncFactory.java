@@ -28,6 +28,6 @@ public interface AsyncFactory {
     /**
      * 操作日志记录
      */
-    TimerTask recordOper(final JoinPoint joinPoint, Log controllerLog, final Exception e, Object jsonResult, ServerWebExchange exchange, long costTime);
+    TimerTask recordOper(final JoinPoint joinPoint, Log controllerLog, final Throwable e, Object jsonResult, ServerWebExchange exchange, long costTime);
 
 }

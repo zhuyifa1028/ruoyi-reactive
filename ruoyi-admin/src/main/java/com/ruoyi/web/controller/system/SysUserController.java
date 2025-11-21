@@ -70,7 +70,7 @@ public class SysUserController extends BaseController {
     }
 
     @Operation(summary = "新增用户")
-//    @Log(title = "用户管理", businessType = BusinessType.INSERT)
+    @Log(title = "用户管理", businessType = BusinessType.INSERT)
     @PreAuthorize("hasAuthority('system:user:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysUserDTO dto) {
