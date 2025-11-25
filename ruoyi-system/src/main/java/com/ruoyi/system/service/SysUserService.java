@@ -39,6 +39,11 @@ public interface SysUserService {
     Mono<Void> updateUser(SysUserDTO dto);
 
     /**
+     * 批量删除用户
+     */
+    Mono<Void> deleteUserByIds(List<Long> userIds);
+
+    /**
      * 根据条件分页查询用户列表
      *
      * @param user 用户信息
@@ -69,22 +74,6 @@ public interface SysUserService {
      * @return 用户对象信息
      */
     SysUser selectUserByUserName(String userName);
-
-    /**
-     * 根据用户ID查询用户所属角色组
-     *
-     * @param userName 用户名
-     * @return 结果
-     */
-    String selectUserRoleGroup(String userName);
-
-    /**
-     * 根据用户ID查询用户所属岗位组
-     *
-     * @param userName 用户名
-     * @return 结果
-     */
-    String selectUserPostGroup(String userName);
 
     /**
      * 校验用户是否允许操作
@@ -139,7 +128,6 @@ public interface SysUserService {
      * @param userId    用户ID
      * @param loginIp   登录IP地址
      * @param loginDate 登录时间
-     * @return 结果
      */
     void updateLoginInfo(Long userId, String loginIp, Date loginDate);
 
@@ -159,13 +147,5 @@ public interface SysUserService {
      * @return 结果
      */
     int resetUserPwd(Long userId, String password);
-
-    /**
-     * 批量删除用户信息
-     *
-     * @param userIds 需要删除的用户ID
-     * @return 结果
-     */
-    int deleteUserByIds(Long[] userIds);
 
 }

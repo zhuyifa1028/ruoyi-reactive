@@ -61,7 +61,7 @@
               <el-table-column label="用户编号" align="center" key="userId" prop="userId" v-if="columns.userId.visible" />
               <el-table-column label="用户名称" align="center" key="userName" prop="userName" v-if="columns.userName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="用户昵称" align="center" key="nickName" prop="nickName" v-if="columns.nickName.visible" :show-overflow-tooltip="true" />
-              <el-table-column label="部门" align="center" key="deptName" prop="dept.deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
+              <el-table-column label="部门" align="center" key="deptName" prop="deptName" v-if="columns.deptName.visible" :show-overflow-tooltip="true" />
               <el-table-column label="手机号码" align="center" key="phonenumber" prop="phonenumber" v-if="columns.phonenumber.visible" width="120" />
               <el-table-column label="状态" align="center" key="status" v-if="columns.status.visible">
                 <template slot-scope="scope">
@@ -79,7 +79,7 @@
                   <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['system:user:remove']">删除</el-button>
                   <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)" v-hasPermi="['system:user:resetPwd', 'system:user:edit']">
                     <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
-                    <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-menu #dropdown>
                       <el-dropdown-item command="handleResetPwd" icon="el-icon-key" v-hasPermi="['system:user:resetPwd']">重置密码</el-dropdown-item>
                       <el-dropdown-item command="handleAuthRole" icon="el-icon-circle-check" v-hasPermi="['system:user:edit']">分配角色</el-dropdown-item>
                     </el-dropdown-menu>
@@ -312,7 +312,7 @@ export default {
         ],
         phonenumber: [
           {
-            pattern: /^1[3|4|5|6|7|8|9][0-9]\d{8}$/,
+            pattern: /^1[3|456789][0-9]\d{8}$/,
             message: "请输入正确的手机号码",
             trigger: "blur"
           }
@@ -340,7 +340,7 @@ export default {
     getList() {
       this.loading = true
       listUser(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-          this.userList = response.rows
+        this.userList = response.data
           this.total = response.total
           this.loading = false
         }
@@ -382,7 +382,7 @@ export default {
     },
     // 节点单击事件
     handleNodeClick(data) {
-      this.queryParams.deptId = data.id
+      this.queryParams.deptId = data.deptId
       this.handleQuery()
     },
     // 用户状态修改
@@ -478,12 +478,12 @@ export default {
         inputPattern: /^.{5,20}$/,
         inputErrorMessage: "用户密码长度必须介于 5 和 20 之间",
         inputValidator: (value) => {
-          if (/<|>|"|'|\||\\/.test(value)) {
+          if (/[<>"'|\\]/.test(value)) {
             return "不能包含非法字符：< > \" ' \\\ |"
           }
         },
       }).then(({ value }) => {
-        resetUserPwd(row.userId, value).then(response => {
+        resetUserPwd(row.userId, value).then(() => {
           this.$modal.msgSuccess("修改成功，新密码是：" + value)
         })
       }).catch(() => {
@@ -499,13 +499,13 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.userId != undefined) {
-            updateUser(this.form).then(response => {
+            updateUser(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.getList()
             })
           } else {
-            addUser(this.form).then(response => {
+            addUser(this.form).then(() => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()
@@ -541,11 +541,11 @@ export default {
       this.download('system/user/importTemplate', {}, `user_template_${new Date().getTime()}.xlsx`)
     },
     // 文件上传中处理
-    handleFileUploadProgress(event, file, fileList) {
+    handleFileUploadProgress() {
       this.upload.isUploading = true
     },
     // 文件上传成功处理
-    handleFileSuccess(response, file, fileList) {
+    handleFileSuccess(response) {
       this.upload.open = false
       this.upload.isUploading = false
       this.$refs.upload.clearFiles()

@@ -21,7 +21,7 @@ import com.ruoyi.system.vo.SysUserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
-import org.apache.commons.lang3.ArrayUtils;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -47,7 +47,7 @@ public class SysUserController extends BaseController {
     @Operation(summary = "根据条件分页查询用户列表")
     @PreAuthorize("hasAuthority('system:user:list')")
     @GetMapping("/list")
-    public Mono<R<List<SysUserVO>>> list(SysUserQuery query) {
+    public Mono<R<List<SysUserVO>>> list(@ParameterObject SysUserQuery query) {
         return sysUserService.selectUserList(query)
                 .map(P::ok);
     }
@@ -56,7 +56,6 @@ public class SysUserController extends BaseController {
     @PreAuthorize("hasAuthority('system:user:query')")
     @GetMapping("/{userId}")
     public Mono<R<SysUserVO>> getInfo(@PathVariable Long userId) {
-        sysUserService.checkUserDataScope(userId);
         return sysUserService.selectUserById(userId)
                 .map(R::ok);
     }
@@ -66,8 +65,6 @@ public class SysUserController extends BaseController {
     @PreAuthorize("hasAuthority('system:user:add')")
     @PostMapping
     public Mono<R<Void>> add(@RequestBody @Validated SysUserDTO dto) {
-        deptService.checkDeptDataScope(dto.getDeptId());
-        roleService.checkRoleDataScope(dto.getRoleIds().toArray(new Long[0]));
         return sysUserService.insertUser(dto)
                 .thenReturn(R.ok());
     }
@@ -77,28 +74,17 @@ public class SysUserController extends BaseController {
     @PreAuthorize("hasAuthority('system:user:edit')")
     @PutMapping
     public Mono<R<Void>> edit(@RequestBody @Validated SysUserDTO dto) {
-        sysUserService.checkUserAllowed(new SysUser(dto.getUserId()));
-        sysUserService.checkUserDataScope(dto.getUserId());
-        deptService.checkDeptDataScope(dto.getDeptId());
-        roleService.checkRoleDataScope(dto.getRoleIds().toArray(new Long[0]));
         return sysUserService.updateUser(dto)
                 .thenReturn(R.ok());
     }
 
-    /**
-     * 删除用户
-     */
-    @PreAuthorize("hasAuthority('system:user:remove')")
+    @Operation(summary = "批量删除用户")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)
+    @PreAuthorize("hasAuthority('system:user:remove')")
     @DeleteMapping("/{userIds}")
-    public Mono<AjaxResult> remove(@PathVariable Long[] userIds) {
-        return ReactiveSecurityUtils.getUserId()
-                .map(userId -> {
-                    if (ArrayUtils.contains(userIds, userId)) {
-                        return error("当前用户不能删除");
-                    }
-                    return toAjax(sysUserService.deleteUserByIds(userIds));
-                });
+    public Mono<R<Void>> remove(@PathVariable List<Long> userIds) {
+        return sysUserService.deleteUserByIds(userIds)
+                .thenReturn(R.ok());
     }
 
     /**

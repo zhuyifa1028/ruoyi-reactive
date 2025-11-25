@@ -1,7 +1,6 @@
 package com.ruoyi.system.service.impl;
 
 import com.ruoyi.common.annotation.DataScope;
-import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.StringUtils;
@@ -11,13 +10,14 @@ import com.ruoyi.system.converter.SysUserConverter;
 import com.ruoyi.system.domain.SysUserPost;
 import com.ruoyi.system.domain.SysUserRole;
 import com.ruoyi.system.dto.SysUserDTO;
-import com.ruoyi.system.entity.SysPost;
-import com.ruoyi.system.mapper.*;
+import com.ruoyi.system.mapper.SysUserMapper;
+import com.ruoyi.system.mapper.SysUserRoleMapper;
 import com.ruoyi.system.query.SysUserQuery;
 import com.ruoyi.system.repository.SysUserPostRepository;
 import com.ruoyi.system.repository.SysUserRepository;
 import com.ruoyi.system.repository.SysUserRoleRepository;
 import com.ruoyi.system.service.SysUserService;
+import com.ruoyi.system.utils.DeptUtils;
 import com.ruoyi.system.vo.SysUserVO;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.ObjectUtils;
@@ -25,13 +25,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.support.ReactivePageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 用户表 业务处理
@@ -56,16 +54,7 @@ public class SysUserServiceImpl implements SysUserService {
     private SysUserMapper userMapper;
 
     @Resource
-    private SysRoleMapper roleMapper;
-
-    @Resource
-    private SysPostMapper postMapper;
-
-    @Resource
     private SysUserRoleMapper userRoleMapper;
-
-    @Resource
-    private SysUserPostMapper userPostMapper;
 
     /**
      * 根据条件分页查询用户列表
@@ -73,13 +62,20 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public Mono<Page<SysUserVO>> selectUserList(SysUserQuery query) {
         return sysUserRepository.selectUserList(query)
-                .map(sysUserConverter::toSysUserVO)
+                .flatMap(user -> {
+                    // 获取部门名称
+                    return DeptUtils.getDeptName(user.getDeptId())
+                            .map(deptName -> {
+                                SysUserVO vo = sysUserConverter.toSysUserVO(user);
+                                vo.setDeptName(deptName);
+                                return vo;
+                            });
+                })
                 .collectList()
                 .flatMap(list -> {
                     Mono<Long> count = sysUserRepository.selectUserCount(query);
                     return ReactivePageableExecutionUtils.getPage(list, query.pageable(), count);
-                })
-                .defaultIfEmpty(Page.empty(query.pageable()));
+                });
     }
 
     /**
@@ -89,7 +85,20 @@ public class SysUserServiceImpl implements SysUserService {
     public Mono<SysUserVO> selectUserById(Long userId) {
         return sysUserRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new ServiceException("用户不存在")))
-                .map(sysUserConverter::toSysUserVO);
+                .flatMap(user -> {
+                    Mono<List<Long>> roleIds = sysUserRoleRepository.findRoleIdsByUserId(userId)
+                            .collectList();
+                    Mono<List<Long>> postIds = sysUserPostRepository.findPostIdsByUserId(userId)
+                            .collectList();
+
+                    return Mono.zip(roleIds, postIds)
+                            .map(tuple -> {
+                                SysUserVO vo = sysUserConverter.toSysUserVO(user);
+                                vo.setRoleIds(tuple.getT1());
+                                vo.setPostIds(tuple.getT2());
+                                return vo;
+                            });
+                });
     }
 
     /**
@@ -234,6 +243,27 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     /**
+     * 批量删除用户
+     */
+    @Transactional
+    @Override
+    public Mono<Void> deleteUserByIds(List<Long> userIds) {
+        return ReactiveSecurityUtils.getUserId()
+                .flatMap(userId -> {
+                    if (org.apache.commons.collections4.CollectionUtils.containsAny(userIds, userId)) {
+                        return Mono.error(new ServiceException("当前用户不能删除"));
+                    }
+                    return Mono.empty();
+                })
+                // 删除用户与岗位关联
+                .then(sysUserPostRepository.deleteByUserIdIn(userIds))
+                // 删除用户与角色关联
+                .then(sysUserRoleRepository.deleteByUserIdIn(userIds))
+                // 删除用户
+                .then(sysUserRepository.deleteByUserIdIn(userIds));
+    }
+
+    /**
      * 根据条件分页查询用户列表
      *
      * @param user 用户信息
@@ -278,37 +308,6 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public SysUser selectUserByUserName(String userName) {
         return userMapper.selectUserByUserName(userName);
-    }
-
-
-    /**
-     * 查询用户所属角色组
-     *
-     * @param userName 用户名
-     * @return 结果
-     */
-    @Override
-    public String selectUserRoleGroup(String userName) {
-        List<SysRole> list = roleMapper.selectRolesByUserName(userName);
-        if (CollectionUtils.isEmpty(list)) {
-            return StringUtils.EMPTY;
-        }
-        return list.stream().map(SysRole::getRoleName).collect(Collectors.joining(","));
-    }
-
-    /**
-     * 查询用户所属岗位组
-     *
-     * @param userName 用户名
-     * @return 结果
-     */
-    @Override
-    public String selectUserPostGroup(String userName) {
-        List<SysPost> list = postMapper.selectPostsByUserName(userName);
-        if (CollectionUtils.isEmpty(list)) {
-            return StringUtils.EMPTY;
-        }
-        return list.stream().map(SysPost::getPostName).collect(Collectors.joining(","));
     }
 
 
@@ -424,25 +423,5 @@ public class SysUserServiceImpl implements SysUserService {
         return userMapper.resetUserPwd(userId, password);
     }
 
-
-    /**
-     * 批量删除用户信息
-     *
-     * @param userIds 需要删除的用户ID
-     * @return 结果
-     */
-    @Override
-    @Transactional
-    public int deleteUserByIds(Long[] userIds) {
-        for (Long userId : userIds) {
-            checkUserAllowed(new SysUser(userId));
-            checkUserDataScope(userId);
-        }
-        // 删除用户与角色关联
-        userRoleMapper.deleteUserRole(userIds);
-        // 删除用户与岗位关联
-        userPostMapper.deleteUserPost(userIds);
-        return userMapper.deleteUserByIds(userIds);
-    }
 
 }

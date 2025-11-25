@@ -8,6 +8,7 @@ import com.ruoyi.system.query.SysUserQuery;
 import com.ruoyi.system.repository.querydsl.SysUserQuerydslRepository;
 import com.ruoyi.system.utils.QuerydslExecutionUtils;
 import jakarta.annotation.Resource;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
@@ -37,6 +38,12 @@ public class SysUserQuerydslRepositoryImpl implements SysUserQuerydslRepository 
         BooleanBuilder predicate = new BooleanBuilder();
         predicate.and(sysUser.delFlag.eq("0"));
 
+        if (StringUtils.isNotBlank(query.getUserName())) {
+            predicate.and(sysUser.userName.contains(query.getUserName()));
+        }
+        if (ObjectUtils.allNotNull(query.getDeptId())) {
+            predicate.and(sysUser.deptId.eq(query.getDeptId()));
+        }
         if (StringUtils.isNotBlank(query.getUserName())) {
             predicate.and(sysUser.userName.contains(query.getUserName()));
         }

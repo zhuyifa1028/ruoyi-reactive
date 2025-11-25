@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Schema(description = "SysUserDTO")
@@ -53,28 +52,13 @@ public class SysUserDTO implements Serializable {
     @Schema(description = "账号状态（0正常 1停用）")
     private String status;
 
-    @Schema(description = "删除标志（0代表存在 2代表删除）")
-    private String delFlag;
-
-    @Schema(description = "最后登录IP")
-    private String loginIp;
-
-    @Schema(description = "最后登录时间")
-    private LocalDateTime loginDate;
-
-    @Schema(description = "密码最后更新时间")
-    private LocalDateTime pwdUpdateDate;
-
     @Schema(description = "备注")
     private String remark;
-    /**
-     * 角色组
-     */
+
+    @Schema(description = "角色组")
     private List<Long> roleIds;
 
-    /**
-     * 岗位组
-     */
+    @Schema(description = "岗位组")
     private List<Long> postIds;
 
 }

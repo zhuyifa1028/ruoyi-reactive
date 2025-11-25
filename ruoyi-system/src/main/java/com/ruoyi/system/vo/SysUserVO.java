@@ -5,7 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
 @Schema(description = "SysUserDTO")
 @Data
@@ -16,6 +16,9 @@ public class SysUserVO implements Serializable {
 
     @Schema(description = "部门ID")
     private Long deptId;
+
+    @Schema(description = "部门名称")
+    private String deptName;
 
     @Schema(description = "用户账号")
     private String userName;
@@ -35,28 +38,19 @@ public class SysUserVO implements Serializable {
     @Schema(description = "用户头像")
     private String avatar;
 
-    @Schema(description = "密码")
-    private String password;
-
     @Schema(description = "账号状态（0正常 1停用）")
     private String status;
-
-    @Schema(description = "删除标志（0代表存在 2代表删除）")
-    private String delFlag;
-
-    @Schema(description = "最后登录IP")
-    private String loginIp;
-
-    @Schema(description = "最后登录时间")
-    private Date loginDate;
-
-    @Schema(description = "密码最后更新时间")
-    private Date pwdUpdateDate;
 
     @Schema(description = "备注")
     private String remark;
 
     @Schema(description = "创建时间")
     private LocalDateTime createTime;
+
+    @Schema(description = "角色组")
+    private List<Long> roleIds;
+
+    @Schema(description = "岗位组")
+    private List<Long> postIds;
 
 }

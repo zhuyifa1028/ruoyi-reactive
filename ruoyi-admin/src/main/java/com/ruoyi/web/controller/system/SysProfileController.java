@@ -14,7 +14,9 @@ import com.ruoyi.common.utils.file.FileUtils;
 import com.ruoyi.common.utils.file.MimeTypeUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.framework.web.service.TokenService;
+import com.ruoyi.framework.webflux.model.R;
 import com.ruoyi.system.service.SysUserService;
+import com.ruoyi.system.vo.SysUserVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,15 +43,10 @@ public class SysProfileController extends BaseController {
      * 个人信息
      */
     @GetMapping
-    public Mono<AjaxResult> profile() {
-        return ReactiveSecurityUtils.getLoginUser()
-                .map(loginUser -> {
-                    SysUser user = loginUser.getUser();
-                    AjaxResult ajax = AjaxResult.success(user);
-                    ajax.put("roleGroup", userService.selectUserRoleGroup(loginUser.getUsername()));
-                    ajax.put("postGroup", userService.selectUserPostGroup(loginUser.getUsername()));
-                    return ajax;
-                });
+    public Mono<R<SysUserVO>> profile() {
+        return ReactiveSecurityUtils.getUserId()
+                .flatMap(userId -> userService.selectUserById(userId))
+                .map(R::ok);
     }
 
     /**

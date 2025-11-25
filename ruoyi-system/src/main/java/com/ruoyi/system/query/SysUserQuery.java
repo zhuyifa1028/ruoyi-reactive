@@ -10,6 +10,9 @@ import java.time.LocalDate;
 @Data
 public class SysUserQuery extends PageDomain {
 
+    @Schema(description = "部门ID")
+    private Long deptId;
+
     @Schema(description = "用户名称")
     private String userName;
 
