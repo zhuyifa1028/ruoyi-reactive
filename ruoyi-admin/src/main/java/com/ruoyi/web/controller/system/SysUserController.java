@@ -1,16 +1,15 @@
 package com.ruoyi.web.controller.system;
 
 import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.constant.HttpStatus;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.R;
 import com.ruoyi.common.core.domain.entity.SysRole;
 import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
 import com.ruoyi.common.utils.TreeselectUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
+import com.ruoyi.framework.webflux.model.P;
+import com.ruoyi.framework.webflux.model.R;
 import com.ruoyi.system.dto.SysUserDTO;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.query.SysUserQuery;
@@ -48,16 +47,9 @@ public class SysUserController extends BaseController {
     @Operation(summary = "根据条件分页查询用户列表")
     @PreAuthorize("hasAuthority('system:user:list')")
     @GetMapping("/list")
-    public Mono<TableDataInfo> list(SysUserQuery query) {
+    public Mono<R<List<SysUserVO>>> list(SysUserQuery query) {
         return sysUserService.selectUserList(query)
-                .flatMap(page -> {
-                    TableDataInfo info = new TableDataInfo();
-                    info.setCode(HttpStatus.SUCCESS);
-                    info.setMsg("查询成功");
-                    info.setRows(page.getContent());
-                    info.setTotal(page.getTotalElements());
-                    return Mono.just(info);
-                });
+                .map(P::ok);
     }
 
     @Operation(summary = "根据用户ID查询用户信息")
