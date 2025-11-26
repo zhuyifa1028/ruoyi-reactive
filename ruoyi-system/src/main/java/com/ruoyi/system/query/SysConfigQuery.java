@@ -1,6 +1,6 @@
 package com.ruoyi.system.query;
 
-import com.ruoyi.common.core.page.PageDomain;
+import com.ruoyi.framework.webflux.model.PageQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import java.time.LocalDate;
 
 @Schema(description = "SysConfigDTO")
 @Data
-public class SysConfigQuery extends PageDomain {
+public class SysConfigQuery extends PageQuery {
 
     @Schema(description = "参数名称")
     private String configName;

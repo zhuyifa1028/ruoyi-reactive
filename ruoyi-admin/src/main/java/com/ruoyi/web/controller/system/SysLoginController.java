@@ -5,11 +5,10 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.entity.SysMenu;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.domain.model.LoginBody;
-import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.web.service.TokenService;
-import com.ruoyi.system.mapper.SysConfigMapper;
+import com.ruoyi.system.service.SysConfigService;
 import com.ruoyi.system.service.SysMenuService;
 import com.ruoyi.system.service.impl.SysLoginService;
 import com.ruoyi.system.service.impl.SysPermissionService;
@@ -46,7 +45,7 @@ public class SysLoginController {
     private TokenService tokenService;
 
     @Resource
-    private SysConfigMapper configService;
+    private SysConfigService sysConfigService;
 
     /**
      * 登录方法
@@ -73,7 +72,7 @@ public class SysLoginController {
     @GetMapping("getInfo")
     public Mono<AjaxResult> getInfo(ServerWebExchange exchange) {
         return tokenService.getLoginUser(exchange)
-                .map(loginUser -> {
+                .flatMap(loginUser -> {
                     SysUser user = loginUser.getUser();
                     // 角色集合
                     Set<String> roles = permissionService.getRolePermission(user);
@@ -83,13 +82,20 @@ public class SysLoginController {
                         loginUser.setPermissions(permissions);
                         tokenService.refreshToken(loginUser);
                     }
-                    AjaxResult ajax = AjaxResult.success();
-                    ajax.put("user", user);
-                    ajax.put("roles", roles);
-                    ajax.put("permissions", permissions);
-                    ajax.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
-                    ajax.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
-                    return ajax;
+
+                    Mono<Boolean> passwordIsModify = initPasswordIsModify(user.getPwdUpdateDate());
+                    Mono<Boolean> passwordIsExpiration = passwordIsExpiration(user.getPwdUpdateDate());
+
+                    return Mono.zip(passwordIsModify, passwordIsExpiration)
+                            .map(tuple -> {
+                                AjaxResult ajax = AjaxResult.success();
+                                ajax.put("user", user);
+                                ajax.put("roles", roles);
+                                ajax.put("permissions", permissions);
+                                ajax.put("isDefaultModifyPwd", tuple.getT1());
+                                ajax.put("isPasswordExpired", tuple.getT2());
+                                return ajax;
+                            });
                 });
     }
 
@@ -109,22 +115,28 @@ public class SysLoginController {
     }
 
     // 检查初始密码是否提醒修改
-    public boolean initPasswordIsModify(Date pwdUpdateDate) {
-        Integer initPasswordModify = Convert.toInt(configService.selectConfigByKey("sys.account.initPasswordModify"));
-        return initPasswordModify != null && initPasswordModify == 1 && pwdUpdateDate == null;
+    public Mono<Boolean> initPasswordIsModify(Date pwdUpdateDate) {
+        return sysConfigService.selectConfigByKey("sys.account.initPasswordModify")
+                .map(Integer::parseInt)
+                .map(initPasswordModify -> initPasswordModify == 1 && pwdUpdateDate == null)
+                .defaultIfEmpty(Boolean.FALSE);
     }
 
     // 检查密码是否过期
-    public boolean passwordIsExpiration(Date pwdUpdateDate) {
-        Integer passwordValidateDays = Convert.toInt(configService.selectConfigByKey("sys.account.passwordValidateDays"));
-        if (passwordValidateDays != null && passwordValidateDays > 0) {
-            if (StringUtils.isNull(pwdUpdateDate)) {
-                // 如果从未修改过初始密码，直接提醒过期
-                return true;
-            }
-            Date nowDate = DateUtils.getNowDate();
-            return DateUtils.differentDaysByMillisecond(nowDate, pwdUpdateDate) > passwordValidateDays;
-        }
-        return false;
+    public Mono<Boolean> passwordIsExpiration(Date pwdUpdateDate) {
+        return sysConfigService.selectConfigByKey("sys.account.passwordValidateDays")
+                .map(Integer::parseInt)
+                .map(passwordValidateDays -> {
+                    if (passwordValidateDays > 0) {
+                        if (StringUtils.isNull(pwdUpdateDate)) {
+                            // 如果从未修改过初始密码，直接提醒过期
+                            return true;
+                        }
+                        Date nowDate = DateUtils.getNowDate();
+                        return DateUtils.differentDaysByMillisecond(nowDate, pwdUpdateDate) > passwordValidateDays;
+                    }
+                    return false;
+                })
+                .defaultIfEmpty(Boolean.FALSE);
     }
 }

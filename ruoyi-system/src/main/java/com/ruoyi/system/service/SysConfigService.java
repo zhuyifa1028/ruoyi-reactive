@@ -34,7 +34,7 @@ public interface SysConfigService {
     /**
      * 获取验证码开关
      */
-    boolean selectCaptchaEnabled();
+    Mono<Boolean> selectCaptchaEnabled();
 
     /**
      * 新增配置
@@ -44,7 +44,7 @@ public interface SysConfigService {
     /**
      * 修改配置
      */
-    Mono<Boolean> updateConfig(SysConfigDTO dto);
+    Mono<Void> updateConfig(SysConfigDTO dto);
 
     /**
      * 批量删除配置

@@ -11,12 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import reactor.core.publisher.Mono;
 
@@ -109,8 +109,8 @@ public class GlobalExceptionHandler {
     /**
      * 自定义验证异常
      */
-    @ExceptionHandler(BindException.class)
-    public Mono<R<Void>> handleBindException(BindException e) {
+    @ExceptionHandler(WebExchangeBindException.class)
+    public Mono<R<Void>> handleBindException(WebExchangeBindException e) {
         log.error(e.getMessage(), e);
         String message = e.getAllErrors().get(0).getDefaultMessage();
         return Mono.just(R.fail(message));

@@ -90,25 +90,27 @@ public class SysLoginService {
         String code = loginBody.getCode();
         String uuid = loginBody.getUuid();
 
-        boolean captchaEnabled = configService.selectCaptchaEnabled();
-        if (captchaEnabled) {
-            String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.nvl(uuid, "");
-            reactiveRedisUtils.getCacheObject(verifyKey)
-                    .switchIfEmpty(Mono.defer(() -> {
-                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
-                        throw new CaptchaExpireException();
-                    }))
-                    .subscribe(captcha -> {
-                        // 删除缓存
-                        reactiveRedisUtils.deleteObject(verifyKey)
-                                .subscribe(bool -> {
-                                    if (!code.equalsIgnoreCase(captcha)) {
-                                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
-                                        throw new CaptchaException();
-                                    }
+        configService.selectCaptchaEnabled()
+                .subscribe(captchaEnabled -> {
+                    if (captchaEnabled) {
+                        String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + StringUtils.nvl(uuid, "");
+                        reactiveRedisUtils.getCacheObject(verifyKey)
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire")));
+                                    throw new CaptchaExpireException();
+                                }))
+                                .subscribe(captcha -> {
+                                    // 删除缓存
+                                    reactiveRedisUtils.deleteObject(verifyKey)
+                                            .subscribe(bool -> {
+                                                if (!code.equalsIgnoreCase(captcha)) {
+                                                    AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange, username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error")));
+                                                    throw new CaptchaException();
+                                                }
+                                            });
                                 });
-                    });
-        }
+                    }
+                });
     }
 
     /**

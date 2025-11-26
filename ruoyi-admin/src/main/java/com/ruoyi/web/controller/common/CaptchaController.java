@@ -45,49 +45,52 @@ public class CaptchaController {
      */
     @GetMapping("/captchaImage")
     public Mono<AjaxResult> getCode() {
-        AjaxResult ajax = AjaxResult.success();
-        boolean captchaEnabled = configService.selectCaptchaEnabled();
-        ajax.put("captchaEnabled", captchaEnabled);
-        if (!captchaEnabled) {
-            return Mono.just(ajax);
-        }
+        return configService.selectCaptchaEnabled()
+                .flatMap(captchaEnabled -> {
 
-        // 保存验证码信息
-        String uuid = IdUtils.simpleUUID();
-        String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + uuid;
-
-        String capStr, code = null;
-        BufferedImage image;
-
-        // 生成验证码
-        String captchaType = RuoYiConfig.getCaptchaType();
-        if ("math".equals(captchaType)) {
-            String capText = captchaProducerMath.createText();
-            capStr = capText.substring(0, capText.lastIndexOf("@"));
-            code = capText.substring(capText.lastIndexOf("@") + 1);
-            image = captchaProducerMath.createImage(capStr);
-        } else if ("char".equals(captchaType)) {
-            capStr = code = captchaProducer.createText();
-            image = captchaProducer.createImage(capStr);
-        } else {
-            image = null;
-        }
-
-        return reactiveRedisUtils.setCacheObject(verifyKey, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION))
-                .publishOn(Schedulers.boundedElastic())
-                .map(bool -> {
-                    // 转换流信息写出
-                    FastByteArrayOutputStream os = new FastByteArrayOutputStream();
-                    try {
-                        assert image != null;
-                        ImageIO.write(image, "jpg", os);
-                    } catch (IOException e) {
-                        return AjaxResult.error(e.getMessage());
+                    AjaxResult ajax = AjaxResult.success();
+                    ajax.put("captchaEnabled", captchaEnabled);
+                    if (!captchaEnabled) {
+                        return Mono.just(ajax);
                     }
 
-                    ajax.put("uuid", uuid);
-                    ajax.put("img", Base64.encode(os.toByteArray()));
-                    return ajax;
+                    // 保存验证码信息
+                    String uuid = IdUtils.simpleUUID();
+                    String verifyKey = CacheConstants.CAPTCHA_CODE_KEY + uuid;
+
+                    String capStr, code = null;
+                    BufferedImage image;
+
+                    // 生成验证码
+                    String captchaType = RuoYiConfig.getCaptchaType();
+                    if ("math".equals(captchaType)) {
+                        String capText = captchaProducerMath.createText();
+                        capStr = capText.substring(0, capText.lastIndexOf("@"));
+                        code = capText.substring(capText.lastIndexOf("@") + 1);
+                        image = captchaProducerMath.createImage(capStr);
+                    } else if ("char".equals(captchaType)) {
+                        capStr = code = captchaProducer.createText();
+                        image = captchaProducer.createImage(capStr);
+                    } else {
+                        image = null;
+                    }
+
+                    return reactiveRedisUtils.setCacheObject(verifyKey, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION))
+                            .publishOn(Schedulers.boundedElastic())
+                            .map(bool -> {
+                                // 转换流信息写出
+                                FastByteArrayOutputStream os = new FastByteArrayOutputStream();
+                                try {
+                                    assert image != null;
+                                    ImageIO.write(image, "jpg", os);
+                                } catch (IOException e) {
+                                    return AjaxResult.error(e.getMessage());
+                                }
+
+                                ajax.put("uuid", uuid);
+                                ajax.put("img", Base64.encode(os.toByteArray()));
+                                return ajax;
+                            });
                 });
     }
 }

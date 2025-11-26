@@ -107,18 +107,18 @@
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="configList" @selection-change="handleSelectionChange">
-      <el-table-column type="selection" width="55" align="center"/>
-      <el-table-column label="参数主键" align="center" prop="configId"/>
-      <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true"/>
-      <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true"/>
-      <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true"/>
+    <el-table v-loading="loading" :data="configData" @selection-change="handleSelectionChange">
+      <el-table-column type="selection" width="55" align="center" />
+      <el-table-column label="参数主键" align="center" prop="configId" />
+      <el-table-column label="参数名称" align="center" prop="configName" :show-overflow-tooltip="true" />
+      <el-table-column label="参数键名" align="center" prop="configKey" :show-overflow-tooltip="true" />
+      <el-table-column label="参数键值" align="center" prop="configValue" :show-overflow-tooltip="true" />
       <el-table-column label="系统内置" align="center" prop="configType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.configType"/>
+          <dict-tag :options="dict.type.sys_yes_no" :value="scope.row.configType" />
         </template>
       </el-table-column>
-      <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true"/>
+      <el-table-column label="备注" align="center" prop="remark" :show-overflow-tooltip="true" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template slot-scope="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -147,9 +147,9 @@
     </el-table>
 
     <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="queryParams.pageNum"
+      v-show="configTotal > 0"
+      :total="configTotal"
+      :page.sync="queryParams.pageNumber"
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
@@ -158,13 +158,13 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="参数名称" prop="configName">
-          <el-input v-model="form.configName" placeholder="请输入参数名称"/>
+          <el-input v-model="form.configName" placeholder="请输入参数名称" />
         </el-form-item>
         <el-form-item label="参数键名" prop="configKey">
-          <el-input v-model="form.configKey" placeholder="请输入参数键名"/>
+          <el-input v-model="form.configKey" placeholder="请输入参数键名" />
         </el-form-item>
         <el-form-item label="参数键值" prop="configValue">
-          <el-input v-model="form.configValue" type="textarea" placeholder="请输入参数键值"/>
+          <el-input v-model="form.configValue" type="textarea" placeholder="请输入参数键值" />
         </el-form-item>
         <el-form-item label="系统内置" prop="configType">
           <el-radio-group v-model="form.configType">
@@ -177,7 +177,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容"/>
+          <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -189,7 +189,7 @@
 </template>
 
 <script>
-import {addConfig, delConfig, getConfig, listConfig, refreshCache, updateConfig} from "@/api/system/config"
+import { addConfig, delConfig, getConfig, listConfig, refreshCache, updateConfig } from "@/api/system/config"
 
 export default {
   name: "Config",
@@ -207,9 +207,9 @@ export default {
       // 显示搜索条件
       showSearch: true,
       // 总条数
-      total: 0,
+      configTotal: 0,
       // 参数表格数据
-      configList: [],
+      configData: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -218,7 +218,7 @@ export default {
       dateRange: [],
       // 查询参数
       queryParams: {
-        pageNum: 1,
+        pageNumber: 1,
         pageSize: 10,
         configName: undefined,
         configKey: undefined,
@@ -229,13 +229,13 @@ export default {
       // 表单校验
       rules: {
         configName: [
-          {required: true, message: "参数名称不能为空", trigger: "blur"}
+          { required: true, message: "参数名称不能为空", trigger: "blur" }
         ],
         configKey: [
-          {required: true, message: "参数键名不能为空", trigger: "blur"}
+          { required: true, message: "参数键名不能为空", trigger: "blur" }
         ],
         configValue: [
-          {required: true, message: "参数键值不能为空", trigger: "blur"}
+          { required: true, message: "参数键值不能为空", trigger: "blur" }
         ]
       }
     }
@@ -247,13 +247,15 @@ export default {
     /** 查询参数列表 */
     getList() {
       this.loading = true
-      listConfig(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-        const {rows, total} = response
-        this.configList = rows
-        this.total = total
+      listConfig(this.addDateRange(this.queryParams, this.dateRange))
+        .then(response => {
+          const { data, total } = response
+          this.configData = data
+          this.configTotal = total
+        })
+        .finally(() => {
           this.loading = false
-        }
-      )
+        })
     },
     // 取消按钮
     cancel() {
@@ -274,7 +276,7 @@ export default {
     },
     /** 搜索按钮操作 */
     handleQuery() {
-      this.queryParams.pageNum = 1
+      this.queryParams.pageNumber = 1
       this.getList()
     },
     /** 重置按钮操作 */
@@ -310,13 +312,13 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.configId != undefined) {
-            updateConfig(this.form).then(response => {
+            updateConfig(this.form).then(() => {
               this.$modal.msgSuccess("修改成功")
               this.open = false
               this.getList()
             })
           } else {
-            addConfig(this.form).then(response => {
+            addConfig(this.form).then(() => {
               this.$modal.msgSuccess("新增成功")
               this.open = false
               this.getList()

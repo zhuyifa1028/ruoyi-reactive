@@ -7,12 +7,12 @@ import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import com.ruoyi.system.converter.SysConfigConverter;
 import com.ruoyi.system.dto.SysConfigDTO;
-import com.ruoyi.system.mapper.SysConfigMapper;
 import com.ruoyi.system.query.SysConfigQuery;
 import com.ruoyi.system.repository.SysConfigRepository;
 import com.ruoyi.system.service.SysConfigService;
 import com.ruoyi.system.vo.SysConfigVO;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.boot.ApplicationArguments;
@@ -30,6 +30,7 @@ import java.util.List;
  * @author bugout
  * @version 2025-11-11
  */
+@Slf4j
 @Service
 public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner {
 
@@ -39,17 +40,17 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
     private SysConfigRepository sysConfigRepository;
 
     @Resource
-    private SysConfigMapper configMapper;
-
-    @Resource
     private ReactiveRedisUtils<String> reactiveRedisUtils;
 
     /**
-     * 项目启动时，初始化参数到缓存
+     * 项目启动时，初始化配置到缓存
      */
     @Override
     public void run(ApplicationArguments args) {
-        this.resetConfigCache().subscribe();
+        this.resetConfigCache()
+                .doOnSuccess(__ -> log.info("初始化配置到缓存成功"))
+                .doOnError(e -> log.error("初始化配置到缓存失败", e))
+                .subscribe();
     }
 
     /**
@@ -63,8 +64,7 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
                 .flatMap(list -> {
                     Mono<Long> count = sysConfigRepository.selectConfigCount(query);
                     return ReactivePageableExecutionUtils.getPage(list, query.pageable(), count);
-                })
-                .defaultIfEmpty(Page.empty(query.pageable()));
+                });
     }
 
     /**
@@ -84,29 +84,25 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
     public Mono<String> selectConfigByKey(String configKey) {
         // 先从redis取
         return reactiveRedisUtils.getCacheObject(getCacheKey(configKey))
-                .switchIfEmpty(Mono.defer(() -> {
-                    // 查询数据库
-                    return sysConfigRepository.findByConfigKey(configKey)
-                            .flatMap(config -> {
-                                // 缓存到redis
-                                return reactiveRedisUtils.setCacheObject(getCacheKey(configKey), config.getConfigValue())
-                                        .thenReturn(config.getConfigValue());
-                            });
-                }))
-                .defaultIfEmpty(StringUtils.EMPTY);
+                .switchIfEmpty(
+                        // 查询数据库
+                        sysConfigRepository.findByConfigKey(configKey)
+                                .flatMap(config -> {
+                                    // 缓存到redis
+                                    return reactiveRedisUtils.setCacheObject(getCacheKey(configKey), config.getConfigValue())
+                                            .thenReturn(config.getConfigValue());
+                                })
+                );
     }
 
     /**
      * 获取验证码开关
      */
     @Override
-    public boolean selectCaptchaEnabled() {
-        String configValue = configMapper.selectConfigByKey("sys.account.captchaEnabled");
-        if (StringUtils.isNotNull(configValue)) {
-
-            return BooleanUtils.toBoolean(configValue);
-        }
-        return false;
+    public Mono<Boolean> selectCaptchaEnabled() {
+        return this.selectConfigByKey("sys.account.captchaEnabled")
+                .map(BooleanUtils::toBoolean)
+                .defaultIfEmpty(Boolean.FALSE);
     }
 
     /**
@@ -117,7 +113,7 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
         // 检查参数键名
         return this.checkConfigKeyUnique(dto)
                 // 保存到数据库
-                .then(Mono.defer(() -> sysConfigRepository.save(sysConfigConverter.toSysConfig(dto))))
+                .then(sysConfigRepository.save(sysConfigConverter.toSysConfig(dto)))
                 // 缓存到redis
                 .then(reactiveRedisUtils.setCacheObject(getCacheKey(dto.getConfigKey()), dto.getConfigValue()));
     }
@@ -139,26 +135,22 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
      * 修改配置
      */
     @Override
-    public Mono<Boolean> updateConfig(SysConfigDTO dto) {
-        return sysConfigRepository.findById(dto.getConfigId())
-                // 配置为空
+    public Mono<Void> updateConfig(SysConfigDTO dto) {
+        // 检查参数键名
+        return this.checkConfigKeyUnique(dto)
+                .then(sysConfigRepository.findById(dto.getConfigId()))
                 .switchIfEmpty(Mono.error(new ServiceException("配置不存在")))
-                // 检查配置键名
-                .flatMap(info -> this.checkConfigKeyUnique(dto).thenReturn(info))
-                // 删除redis缓存
-                .flatMap(info -> {
-                    if (ObjectUtils.notEqual(info.getConfigKey(), dto.getConfigKey())) {
-                        return reactiveRedisUtils.deleteObject(getCacheKey(info.getConfigKey())).thenReturn(info);
-                    }
-                    return Mono.just(info);
+                .flatMap(config -> {
+                    String oldConfigKey = config.getConfigKey();
+
+                    // 保存到数据库
+                    return sysConfigRepository.save(sysConfigConverter.toSysConfig(dto, config))
+                            // 如果configKey发生变化，需要删除旧缓存
+                            .then(ObjectUtils.notEqual(oldConfigKey, dto.getConfigKey()) ? reactiveRedisUtils.deleteObject(getCacheKey(oldConfigKey)) : Mono.empty())
+                            // 缓存到redis
+                            .then(reactiveRedisUtils.setCacheObject(getCacheKey(dto.getConfigKey()), dto.getConfigValue()));
                 })
-                // 保存到数据库
-                .flatMap(info -> {
-                    sysConfigConverter.copyProperties(dto, info);
-                    return sysConfigRepository.save(info);
-                })
-                // 缓存到redis
-                .then(reactiveRedisUtils.setCacheObject(getCacheKey(dto.getConfigKey()), dto.getConfigValue()));
+                .then();
     }
 
     /**
@@ -171,7 +163,6 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
                     if (StringUtils.equals(UserConstants.YES, config.getConfigType())) {
                         return Mono.error(new ServiceException(String.format("内置参数【%1$s】不能删除 ", config.getConfigKey())));
                     }
-
                     // 删除配置
                     return sysConfigRepository.delete(config)
                             // 删除redis缓存

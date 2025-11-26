@@ -12,7 +12,7 @@ public interface SysConfigConverter {
 
     SysConfig toSysConfig(SysConfigDTO source);
 
-    void copyProperties(SysConfigDTO source, @MappingTarget SysConfig target);
+    SysConfig toSysConfig(SysConfigDTO source, @MappingTarget SysConfig target);
 
     SysConfigVO toSysConfigVO(SysConfig source);
 
