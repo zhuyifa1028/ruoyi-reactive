@@ -22,7 +22,7 @@ public interface SysConfigService {
     Mono<Page<SysConfigVO>> selectConfigList(SysConfigQuery query);
 
     /**
-     * 根据配置编号获取详细信息
+     * 根据配置ID获取详细信息
      */
     Mono<SysConfigVO> selectConfigById(Long configId);
 

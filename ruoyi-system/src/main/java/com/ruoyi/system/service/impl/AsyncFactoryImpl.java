@@ -3,7 +3,6 @@ package com.ruoyi.system.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.ruoyi.common.annotation.Log;
 import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.core.text.Convert;
 import com.ruoyi.common.enums.BusinessStatus;
 import com.ruoyi.common.enums.HttpMethod;
@@ -113,10 +112,10 @@ public class AsyncFactoryImpl implements AsyncFactory {
                 .subscribe(loginUser -> {
                     if (loginUser != null) {
                         operLog.setOperName(loginUser.getUsername());
-                        SysUser currentUser = loginUser.getUser();
-                        if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
-                            operLog.setDeptName(currentUser.getDept().getDeptName());
-                        }
+//                        SysUser currentUser = loginUser.getUser();
+//                        if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
+//                            operLog.setDeptName(currentUser.getDept().getDeptName());
+//                        }
                     }
                 });
 

@@ -9,8 +9,11 @@ import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.service.SysDeptService;
 import com.ruoyi.system.vo.SysDeptVO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Tag(name = "部门表 接口")
+@Validated
 @RestController
 @RequestMapping("/system/dept")
 public class SysDeptController extends BaseController {
@@ -29,13 +33,14 @@ public class SysDeptController extends BaseController {
     @Operation(summary = "查询部门列表")
     @PreAuthorize("hasAuthority('system:dept:list')")
     @GetMapping("/list")
-    public Mono<R<List<SysDeptVO>>> list(SysDeptQuery query) {
+    public Mono<R<List<SysDeptVO>>> list(@ParameterObject SysDeptQuery query) {
         return deptService.selectDeptList(query)
                 .collectList()
                 .map(R::ok);
     }
 
     @Operation(summary = "查询部门列表（排除指定节点）")
+    @Parameter(name = "deptId", description = "部门ID")
     @PreAuthorize("hasAuthority('system:dept:list')")
     @GetMapping("/list/exclude/{deptId}")
     public Mono<R<List<SysDeptVO>>> excludeChild(@PathVariable Long deptId) {
@@ -45,6 +50,7 @@ public class SysDeptController extends BaseController {
     }
 
     @Operation(summary = "根据部门ID查询信息")
+    @Parameter(name = "deptId", description = "部门ID")
     @PreAuthorize("hasAuthority('system:dept:query')")
     @GetMapping(value = "/{deptId}")
     public Mono<R<SysDeptVO>> getInfo(@PathVariable Long deptId) {
@@ -56,7 +62,7 @@ public class SysDeptController extends BaseController {
     @Log(title = "部门管理", businessType = BusinessType.INSERT)
     @PreAuthorize("hasAuthority('system:dept:add')")
     @PostMapping
-    public Mono<R<Void>> add(@RequestBody @Validated SysDeptDTO dto) {
+    public Mono<R<Void>> add(@RequestBody @Valid SysDeptDTO dto) {
         return deptService.insertDept(dto)
                 .thenReturn(R.ok());
     }
@@ -65,12 +71,13 @@ public class SysDeptController extends BaseController {
     @Log(title = "部门管理", businessType = BusinessType.UPDATE)
     @PreAuthorize("hasAuthority('system:dept:edit')")
     @PutMapping
-    public Mono<R<Void>> edit(@RequestBody @Validated SysDeptDTO dto) {
+    public Mono<R<Void>> edit(@RequestBody @Valid SysDeptDTO dto) {
         return deptService.updateDept(dto)
                 .thenReturn(R.ok());
     }
 
     @Operation(summary = "删除部门")
+    @Parameter(name = "deptId", description = "部门ID")
     @Log(title = "部门管理", businessType = BusinessType.DELETE)
     @PreAuthorize("hasAuthority('system:dept:remove')")
     @DeleteMapping("/{deptId}")

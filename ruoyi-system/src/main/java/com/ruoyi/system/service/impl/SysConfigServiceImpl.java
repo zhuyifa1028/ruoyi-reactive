@@ -68,7 +68,7 @@ public class SysConfigServiceImpl implements SysConfigService, ApplicationRunner
     }
 
     /**
-     * 根据配置编号获取详细信息
+     * 根据配置ID获取详细信息
      */
     @Override
     public Mono<SysConfigVO> selectConfigById(Long configId) {
