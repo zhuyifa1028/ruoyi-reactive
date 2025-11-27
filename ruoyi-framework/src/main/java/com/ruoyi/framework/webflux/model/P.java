@@ -14,7 +14,7 @@ public class P<T> extends R<T> {
     @Schema(description = "总记录数")
     private Long total;
 
-    public static <T> R<List<T>> ok(Page<T> page) {
+    public static <T> P<List<T>> ok(Page<T> page) {
         P<List<T>> r = new P<>();
         r.setCode(HttpStatus.SUCCESS);
         r.setMessage("操作成功");

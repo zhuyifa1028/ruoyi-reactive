@@ -10,6 +10,7 @@ import com.ruoyi.system.service.SysDictService;
 import com.ruoyi.system.utils.DictUtils;
 import com.ruoyi.system.vo.SysDictVO;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.support.ReactivePageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.GroupedFlux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
  * @author bugout
  * @version 2025-11-13
  */
+@Slf4j
 @Service
 public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
 
@@ -40,7 +43,10 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
      */
     @Override
     public void run(ApplicationArguments args) {
-        this.resetDictCache().subscribe();
+        this.resetDictCache()
+                .doOnSuccess(__ -> log.info("初始化字典到缓存成功"))
+                .doOnError(e -> log.error("初始化字典到缓存失败", e))
+                .subscribe();
     }
 
     /**
@@ -54,8 +60,7 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 .flatMap(list -> {
                     Mono<Long> count = sysDictRepository.selectDictCount(query);
                     return ReactivePageableExecutionUtils.getPage(list, query.pageable(), count);
-                })
-                .defaultIfEmpty(Page.empty(query.pageable()));
+                });
     }
 
     /**
@@ -64,17 +69,15 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
     @Override
     public Flux<SysDictVO> selectDictListByType(String dictType) {
         return DictUtils.getDictCache(dictType)
-                .switchIfEmpty(
-                        // 根据字典类型查询
-                        sysDictRepository.findAllByDictType(dictType)
-                                .collectList()
-                                .flatMapMany(list -> {
-                                    // 更新字典缓存
-                                    return DictUtils.setDictCache(dictType, list)
-                                            .thenMany(Flux.fromIterable(list));
-                                })
-                )
+                // 更新字典缓存
+                .switchIfEmpty(this.updateDictCache(dictType))
                 .map(sysDictConverter::toSysDictVO);
+    }
+
+    private Flux<SysDict> updateDictCache(String dictType) {
+        return sysDictRepository.findAllByDictType(dictType)
+                .collectList()
+                .flatMapMany(dictList -> DictUtils.setDictCache(dictType, dictList).thenMany(Flux.fromIterable(dictList)));
     }
 
     /**
@@ -93,15 +96,13 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
     @Override
     public Mono<Void> insertDict(SysDictDTO dto) {
         return this.checkDictValueUnique(dto)
+                // 保存字典
                 .then(Mono.defer(() -> {
-                    // 保存字典
                     SysDict dict = sysDictConverter.toSysDict(dto);
                     return sysDictRepository.save(dict);
                 }))
-                .thenMany(sysDictRepository.findAllByDictType(dto.getDictType()))
-                .collectList()
                 // 更新字典缓存
-                .flatMap(dictList -> DictUtils.setDictCache(dto.getDictType(), dictList))
+                .thenMany(this.updateDictCache(dto.getDictType()))
                 .then();
     }
 
@@ -132,10 +133,8 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                     sysDictConverter.copyProperties(dto, dict);
                     return sysDictRepository.save(dict);
                 })
-                .thenMany(sysDictRepository.findAllByDictType(dto.getDictType()))
-                .collectList()
                 // 更新字典缓存
-                .flatMap(dictList -> DictUtils.setDictCache(dto.getDictType(), dictList))
+                .thenMany(this.updateDictCache(dto.getDictType()))
                 .then();
     }
 
@@ -153,13 +152,8 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 })
                 // 字典类型去重
                 .distinct()
-                .flatMap(dictType -> {
-                    // 根据字典类型查询
-                    return sysDictRepository.findAllByDictType(dictType)
-                            .collectList()
-                            // 更新字典缓存
-                            .flatMap(dictList -> DictUtils.setDictCache(dictType, dictList));
-                })
+                // 更新字典缓存
+                .flatMap(this::updateDictCache)
                 .then();
     }
 
@@ -174,10 +168,15 @@ public class SysDictServiceImpl implements SysDictService, ApplicationRunner {
                 // 分组
                 .groupBy(SysDict::getDictType)
                 // 写入缓存
-                .flatMap(group ->
-                        group.collectList().flatMap(dictList -> DictUtils.setDictCache(group.key(), dictList))
-                )
+                .flatMap(this::initDictCache)
                 .then();
+    }
+
+    /**
+     * 初始化字典缓存
+     */
+    public Mono<Boolean> initDictCache(GroupedFlux<String, SysDict> group) {
+        return group.collectList().flatMap(dictList -> DictUtils.setDictCache(group.key(), dictList));
     }
 
 }
