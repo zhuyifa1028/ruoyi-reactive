@@ -1,13 +1,10 @@
 package com.ruoyi.system.service;
 
-import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.system.dto.SysDeptDTO;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.vo.SysDeptVO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 /**
  * 部门表 业务层
@@ -47,18 +44,9 @@ public interface SysDeptService {
      */
     Mono<Void> deleteDeptById(Long deptId);
 
-    List<SysDept> selectDeptList(SysDept dept);
-
     /**
      * 根据角色ID查询选中部门列表
      */
     Flux<Long> selectDeptListByRoleId(Long roleId);
-
-    /**
-     * 校验部门是否有数据权限
-     *
-     * @param deptId 部门id
-     */
-    void checkDeptDataScope(Long deptId);
 
 }

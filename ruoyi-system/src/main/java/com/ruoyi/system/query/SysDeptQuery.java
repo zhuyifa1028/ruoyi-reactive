@@ -9,6 +9,9 @@ import java.io.Serializable;
 @Data
 public class SysDeptQuery implements Serializable {
 
+    @Schema(description = "部门ID")
+    private Long deptId;
+
     @Schema(description = "部门名称")
     private String deptName;
 

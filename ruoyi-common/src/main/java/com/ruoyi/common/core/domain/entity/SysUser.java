@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.annotation.Excel.ColumnType;
 import com.ruoyi.common.annotation.Excel.Type;
-import com.ruoyi.common.annotation.Excels;
 import com.ruoyi.common.core.domain.BaseEntity;
 import com.ruoyi.common.xss.Xss;
 import jakarta.validation.constraints.Email;
@@ -114,15 +113,6 @@ public class SysUser extends BaseEntity {
     private Date pwdUpdateDate;
 
     /**
-     * 部门对象
-     */
-    @Excels({
-            @Excel(name = "部门名称", targetAttr = "deptName", type = Type.EXPORT),
-            @Excel(name = "部门负责人", targetAttr = "leader", type = Type.EXPORT)
-    })
-    private SysDept dept;
-
-    /**
      * 角色对象
      */
     private List<SysRole> roles;
@@ -185,7 +175,6 @@ public class SysUser extends BaseEntity {
                 .append("updateBy", getUpdateBy())
                 .append("updateTime", getUpdateTime())
                 .append("remark", getRemark())
-                .append("dept", getDept())
                 .toString();
     }
 }

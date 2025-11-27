@@ -1,17 +1,13 @@
 package com.ruoyi.system.service.impl;
 
-import com.ruoyi.common.annotation.DataScope;
 import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.entity.SysDept;
 import com.ruoyi.common.core.domain.entity.SysUser;
 import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
 import com.ruoyi.system.converter.SysDeptConverter;
 import com.ruoyi.system.domain.SysRoleDept;
 import com.ruoyi.system.dto.SysDeptDTO;
-import com.ruoyi.system.mapper.SysDeptMapper;
+import com.ruoyi.system.entity.SysDept;
 import com.ruoyi.system.query.SysDeptQuery;
 import com.ruoyi.system.repository.SysDeptRepository;
 import com.ruoyi.system.repository.SysRoleDeptRepository;
@@ -22,10 +18,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -44,9 +40,6 @@ public class SysDeptServiceImpl implements SysDeptService {
 
     @Resource
     private SysRoleDeptRepository sysRoleDeptRepository;
-
-    @Resource
-    private SysDeptMapper deptMapper;
 
     /**
      * 查询部门列表
@@ -98,7 +91,7 @@ public class SysDeptServiceImpl implements SysDeptService {
                         return Mono.error(new ServiceException("上级部门停用，不允许新增"));
                     }
 
-                    com.ruoyi.system.entity.SysDept dept = sysDeptConverter.toSysDept(dto);
+                    SysDept dept = sysDeptConverter.toSysDept(dto);
                     dept.setAncestors(parent.getAncestors() + "," + parent.getDeptId());
                     return sysDeptRepository.save(dept);
                 })
@@ -129,7 +122,7 @@ public class SysDeptServiceImpl implements SysDeptService {
                     if (Objects.equals(dto.getDeptId(), dto.getParentId())) {
                         return Mono.error(new ServiceException("上级部门不能是自己"));
                     }
-                    if (StringUtils.equals(UserConstants.DEPT_DISABLE, dto.getStatus())) {
+                    if (Objects.equals(UserConstants.DEPT_DISABLE, dto.getStatus())) {
                         return sysDeptRepository.countNormalChildrenByDeptId(dto.getDeptId())
                                 .flatMap(countNormalChildren -> {
                                     if (countNormalChildren > 0) {
@@ -143,8 +136,8 @@ public class SysDeptServiceImpl implements SysDeptService {
                 .then(sysDeptRepository.findById(dto.getDeptId()).switchIfEmpty(Mono.error(new ServiceException("部门不存在"))))
                 .zipWith(sysDeptRepository.findById(dto.getParentId()).switchIfEmpty(Mono.error(new ServiceException("上级部门不存在"))))
                 .flatMap(tuple -> {
-                    com.ruoyi.system.entity.SysDept parent = tuple.getT2();
-                    com.ruoyi.system.entity.SysDept dept = tuple.getT1();
+                    SysDept parent = tuple.getT2();
+                    SysDept dept = tuple.getT1();
 
                     // 构建新的 ancestors
                     String newAncestors = parent.getAncestors() + "," + parent.getDeptId();
@@ -165,7 +158,7 @@ public class SysDeptServiceImpl implements SysDeptService {
                             // 如果是启用状态，则启用上级部门
                             .flatMap(result -> {
                                 if (Objects.equals(dept.getStatus(), UserConstants.DEPT_NORMAL)) {
-                                    Set<String> set = org.springframework.util.StringUtils.commaDelimitedListToSet(dept.getAncestors());
+                                    Set<String> set = StringUtils.commaDelimitedListToSet(dept.getAncestors());
                                     if (CollectionUtils.isNotEmpty(set)) {
                                         return sysDeptRepository.updateParentNormal(set);
                                     }
@@ -182,15 +175,16 @@ public class SysDeptServiceImpl implements SysDeptService {
         return ReactiveSecurityUtils.getUserId()
                 .filter(SysUser::isNotAdmin)
                 .flatMap(userId -> {
-                    if (SysUser.isNotAdmin(userId)) {
-                        SysDept dept = new SysDept();
-                        dept.setDeptId(deptId);
-                        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
-                        if (StringUtils.isEmpty(depts)) {
-                            return Mono.error(new ServiceException("没有权限访问部门数据！"));
-                        }
-                    }
-                    return Mono.empty();
+                    SysDeptQuery query = new SysDeptQuery();
+                    query.setDeptId(deptId);
+                    return sysDeptRepository.selectDeptList(query)
+                            .collectList()
+                            .flatMap(deptList -> {
+                                if (CollectionUtils.isEmpty(deptList)) {
+                                    return Mono.error(new ServiceException("没有权限访问部门数据！"));
+                                }
+                                return Mono.empty();
+                            });
                 });
     }
 
@@ -217,12 +211,6 @@ public class SysDeptServiceImpl implements SysDeptService {
                 .then(sysDeptRepository.deleteByDeptId(deptId));
     }
 
-    @DataScope(deptAlias = "d")
-    @Override
-    public List<SysDept> selectDeptList(SysDept dept) {
-        return deptMapper.selectDeptList(dept);
-    }
-
     /**
      * 根据角色ID查询选中部门列表
      */
@@ -230,27 +218,6 @@ public class SysDeptServiceImpl implements SysDeptService {
     public Flux<Long> selectDeptListByRoleId(Long roleId) {
         return sysRoleDeptRepository.findAllByRoleId(roleId)
                 .map(SysRoleDept::getDeptId);
-    }
-
-    /**
-     * 校验部门是否有数据权限
-     *
-     * @param deptId 部门id
-     */
-    @Override
-    public void checkDeptDataScope(Long deptId) {
-        ReactiveSecurityUtils.getUserId()
-                .filter(SysUser::isNotAdmin)
-                .subscribe(__ -> {
-                    if (StringUtils.isNotNull(deptId)) {
-                        SysDept dept = new SysDept();
-                        dept.setDeptId(deptId);
-                        List<SysDept> depts = SpringUtils.getAopProxy(this).selectDeptList(dept);
-                        if (StringUtils.isEmpty(depts)) {
-                            throw new ServiceException("没有权限访问部门数据！");
-                        }
-                    }
-                });
     }
 
 }
