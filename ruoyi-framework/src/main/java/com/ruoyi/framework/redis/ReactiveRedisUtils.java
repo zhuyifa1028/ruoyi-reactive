@@ -1,10 +1,12 @@
 package com.ruoyi.framework.redis;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.data.redis.core.ReactiveHashOperations;
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveValueOperations;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,6 +24,7 @@ import java.util.Objects;
  * @version 2025-11-15
  **/
 @SuppressWarnings("unused")
+@Slf4j
 @Component
 public class ReactiveRedisUtils<T> {
 
@@ -36,6 +39,23 @@ public class ReactiveRedisUtils<T> {
      */
     public Flux<String> keys(String pattern) {
         return reactiveRedisOperations.keys(pattern);
+    }
+
+    /**
+     * 基于 Redis SCAN 命令的响应式扫描方法（替代 KEYS，避免阻塞 Redis）
+     */
+    public Flux<String> scan(String pattern) {
+        // 构建 SCAN 选项：匹配模式+批次大小（count 建议 50-200，平衡效率与 Redis 压力）
+        ScanOptions options = ScanOptions.scanOptions()
+                .match(pattern)
+                .count(100)
+                .build();
+
+        return reactiveRedisOperations.scan(options)
+                .onErrorResume(e -> {
+                    log.error("Redis SCAN 命令执行失败，pattern: {}", pattern, e);
+                    return Flux.empty();
+                });
     }
 
     /**
