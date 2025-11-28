@@ -12,6 +12,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,44 +31,46 @@ public class LogAspect {
     @Resource
     private AsyncFactory AsyncFactory;
 
-    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
     @Around("@annotation(com.ruoyi.common.annotation.Log)")
-    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Mono<Object> around(ProceedingJoinPoint joinPoint) {
         Log controllerLog = getAnnotationLog(joinPoint);
         long startTime = System.currentTimeMillis();
 
-        try {
-            Object proceed = joinPoint.proceed();
+        return ReactiveRequestContextHolder.getExchange()
+                .flatMap(exchange -> {
+                    try {
+                        Object proceed = joinPoint.proceed();
 
-            // 处理响应式返回值
-            if (proceed instanceof Mono<?> mono) {
-                return mono.flatMap(result -> {
-                            handleLog(joinPoint, controllerLog, null, result, startTime);
-                            return Mono.just(result);
-                        })
-                        .onErrorResume(e -> {
-                            handleLog(joinPoint, controllerLog, e, null, startTime);
-                            return Mono.error(e);
-                        });
-            } else if (proceed instanceof Flux<?> flux) {
-                return flux.collectList()
-                        .flatMapMany(results -> {
-                            handleLog(joinPoint, controllerLog, null, results, startTime);
-                            return Flux.fromIterable(results);
-                        })
-                        .onErrorResume(e -> {
-                            handleLog(joinPoint, controllerLog, e, null, startTime);
-                            return Flux.error(e);
-                        });
-            } else {
-                // 同步方法
-                handleLog(joinPoint, controllerLog, null, proceed, startTime);
-                return proceed;
-            }
-        } catch (Throwable e) {
-            handleLog(joinPoint, controllerLog, e, null, startTime);
-            throw e;
-        }
+                        // 处理响应式返回值
+                        if (proceed instanceof Mono<?> mono) {
+                            return mono.flatMap(result -> {
+                                        handleLog(joinPoint, controllerLog, null, result, startTime, exchange);
+                                        return Mono.just(result);
+                                    })
+                                    .onErrorResume(e -> {
+                                        handleLog(joinPoint, controllerLog, e, null, startTime, exchange);
+                                        return Mono.error(e);
+                                    });
+                        } else if (proceed instanceof Flux<?> flux) {
+                            return flux.collectList()
+                                    .flatMap(results -> {
+                                        handleLog(joinPoint, controllerLog, null, results, startTime, exchange);
+                                        return Mono.just(results);
+                                    })
+                                    .onErrorResume(e -> {
+                                        handleLog(joinPoint, controllerLog, e, null, startTime, exchange);
+                                        return Mono.error(e);
+                                    });
+                        } else {
+                            // 同步方法
+                            handleLog(joinPoint, controllerLog, null, proceed, startTime, exchange);
+                            return Mono.just(proceed);
+                        }
+                    } catch (Throwable e) {
+                        handleLog(joinPoint, controllerLog, e, null, startTime, exchange);
+                        return Mono.error(e);
+                    }
+                });
     }
 
     /**
@@ -93,15 +96,12 @@ public class LogAspect {
         return null;
     }
 
-    protected void handleLog(final JoinPoint joinPoint, Log controllerLog, final Throwable e, Object jsonResult, long startTime) {
+    protected void handleLog(final JoinPoint joinPoint, Log controllerLog, final Throwable e, Object jsonResult, long startTime, ServerWebExchange exchange) {
         try {
             long costTime = System.currentTimeMillis() - startTime;
 
-            ReactiveRequestContextHolder.getExchange()
-                    .subscribe(exchange -> {
-                        // 保存数据库
-                        AsyncManager.me().execute(AsyncFactory.recordOper(joinPoint, controllerLog, e, jsonResult, exchange, costTime));
-                    });
+            // 保存数据库
+            AsyncManager.me().execute(AsyncFactory.recordOper(joinPoint, controllerLog, e, jsonResult, exchange, costTime));
         } catch (Exception exp) {
             // 记录本地异常日志
             log.error("异常信息:", exp);

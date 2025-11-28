@@ -2,7 +2,6 @@ package com.ruoyi.framework.config;
 
 import com.ruoyi.common.config.RuoYiConfig;
 import com.ruoyi.common.constant.Constants;
-import com.ruoyi.framework.web.ReactiveRequestContextHolder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.CacheControl;
@@ -11,7 +10,6 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.reactive.config.ResourceHandlerRegistry;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
-import org.springframework.web.server.WebFilter;
 
 import java.util.concurrent.TimeUnit;
 
@@ -54,11 +52,6 @@ public class ResourcesConfig implements WebFluxConfigurer {
         source.registerCorsConfiguration("/**", config);
         // 返回新的CorsFilter
         return new CorsWebFilter(source);
-    }
-
-    @Bean
-    public WebFilter requestContextFilter() {
-        return (exchange, chain) -> chain.filter(exchange).contextWrite(ReactiveRequestContextHolder.withRequestContext(exchange));
     }
 
 }

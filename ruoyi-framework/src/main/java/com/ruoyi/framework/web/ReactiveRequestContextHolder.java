@@ -8,7 +8,7 @@ import reactor.util.context.ContextView;
 
 public class ReactiveRequestContextHolder {
 
-    private static final Class<?> REQUEST_CONTEXT_KEY = ServerWebExchange.class;
+    private static final String REQUEST_CONTEXT_KEY = "ServerWebExchange.class";
 
     public static Context withRequestContext(ServerWebExchange exchange) {
         return Context.of(REQUEST_CONTEXT_KEY, exchange);
@@ -19,7 +19,7 @@ public class ReactiveRequestContextHolder {
     }
 
     private static ServerWebExchange getRequestContext(ContextView context) {
-        return context.<ServerWebExchange>get(REQUEST_CONTEXT_KEY);
+        return context.get(REQUEST_CONTEXT_KEY);
     }
 
     public static Mono<ServerWebExchange> getExchange() {
