@@ -6,6 +6,7 @@ import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -24,5 +25,8 @@ public interface SysUserRepository extends R2dbcRepository<SysUser, Long>, SysUs
 
     @Query("UPDATE sys_user SET del_flag = '2' WHERE user_id IN (:userIds)")
     Mono<Void> deleteByUserIdIn(List<Long> userIds);
+
+    @Query("UPDATE sys_user SET login_ip = :loginIp, login_date = :loginDate WHERE user_id = :userId")
+    Mono<Void> updateLoginInfo(Long userId, String loginIp, LocalDateTime loginDate);
 
 }

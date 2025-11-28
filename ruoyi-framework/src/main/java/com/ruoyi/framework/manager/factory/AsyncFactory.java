@@ -3,6 +3,7 @@ package com.ruoyi.framework.manager.factory;
 import com.ruoyi.common.annotation.Log;
 import org.aspectj.lang.JoinPoint;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.TimerTask;
 
@@ -14,16 +15,9 @@ import java.util.TimerTask;
 public interface AsyncFactory {
 
     /**
-     * 记录登录信息
-     *
-     * @param username 用户名
-     * @param status   状态
-     * @param message  消息
-     * @param args     列表
-     * @return 任务task
+     * 记录访问信息
      */
-    TimerTask recordLogininfor(ServerWebExchange exchange, final String username, final String status, final String message,
-                               final Object... args);
+    Mono<Void> recordAccessInfo(ServerWebExchange exchange, String username, String status, String message, Object... args);
 
     /**
      * 操作日志记录

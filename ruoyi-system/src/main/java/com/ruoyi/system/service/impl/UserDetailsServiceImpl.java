@@ -11,7 +11,6 @@ import com.ruoyi.system.service.SysUserService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
     @Resource
     private SysPasswordService passwordService;
 
-    @Autowired
+    @Resource
     private SysPermissionService permissionService;
 
     @Override
@@ -50,9 +49,8 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
             throw new ServiceException(MessageUtils.message("user.blocked"));
         }
 
-        passwordService.validate(user);
-
-        return Mono.just(createLoginUser(user));
+        return passwordService.validate(user)
+                .then(Mono.just(createLoginUser(user)));
     }
 
     public UserDetails createLoginUser(SysUser user) {

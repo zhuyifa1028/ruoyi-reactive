@@ -10,9 +10,9 @@ export function list(query) {
 }
 
 // 删除登录日志
-export function delLogininfor(infoId) {
+export function delLogininfor(logIds) {
   return request({
-    url: '/monitor/logininfor/' + infoId,
+    url: '/monitor/logininfor/' + logIds,
     method: 'delete'
   })
 }

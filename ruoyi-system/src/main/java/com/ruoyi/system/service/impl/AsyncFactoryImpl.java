@@ -15,11 +15,12 @@ import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
-import com.ruoyi.system.domain.SysLogininfor;
 import com.ruoyi.system.domain.SysOperLog;
-import com.ruoyi.system.service.ISysLogininforService;
+import com.ruoyi.system.entity.SysAccessLog;
+import com.ruoyi.system.repository.SysAccessLogRepository;
 import com.ruoyi.system.service.ISysOperLogService;
 import eu.bitwalker.useragentutils.UserAgent;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.ArrayUtils;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Map;
@@ -51,52 +53,44 @@ public class AsyncFactoryImpl implements AsyncFactory {
      */
     public static final String[] EXCLUDE_PROPERTIES = {"password", "oldPassword", "newPassword", "confirmPassword"};
 
+    @Resource
+    private SysAccessLogRepository sysAccessLogRepository;
+
     /**
-     * 记录登录信息
-     *
-     * @param username 用户名
-     * @param status   状态
-     * @param message  消息
-     * @param args     列表
-     * @return 任务task
+     * 记录访问信息
      */
-    public TimerTask recordLogininfor(ServerWebExchange exchange, final String username, final String status, final String message,
-                                      final Object... args) {
+    public Mono<Void> recordAccessInfo(ServerWebExchange exchange, String username, String status, String message, Object... args) {
         final UserAgent userAgent = UserAgent.parseUserAgentString(exchange.getRequest().getHeaders().getFirst("User-Agent"));
         final String ip = IpUtils.getIpAddr(exchange);
-        return new TimerTask() {
-            @Override
-            public void run() {
-                String address = AddressUtils.getRealAddressByIP(ip);
-                String s = LogUtils.getBlock(ip) +
-                        address +
-                        LogUtils.getBlock(username) +
-                        LogUtils.getBlock(status) +
-                        LogUtils.getBlock(message);
-                // 打印信息到日志
-                sys_user_logger.info(s, args);
-                // 获取客户端操作系统
-                String os = userAgent.getOperatingSystem().getName();
-                // 获取客户端浏览器
-                String browser = userAgent.getBrowser().getName();
-                // 封装对象
-                SysLogininfor logininfor = new SysLogininfor();
-                logininfor.setUserName(username);
-                logininfor.setIpaddr(ip);
-                logininfor.setLoginLocation(address);
-                logininfor.setBrowser(browser);
-                logininfor.setOs(os);
-                logininfor.setMsg(message);
-                // 日志状态
-                if (StringUtils.equalsAny(status, Constants.LOGIN_SUCCESS, Constants.LOGOUT, Constants.REGISTER)) {
-                    logininfor.setStatus(Constants.SUCCESS);
-                } else if (Constants.LOGIN_FAIL.equals(status)) {
-                    logininfor.setStatus(Constants.FAIL);
-                }
-                // 插入数据
-                SpringUtils.getBean(ISysLogininforService.class).insertLogininfor(logininfor);
-            }
-        };
+        String address = AddressUtils.getRealAddressByIP(ip);
+        String s = LogUtils.getBlock(ip) +
+                address +
+                LogUtils.getBlock(username) +
+                LogUtils.getBlock(status) +
+                LogUtils.getBlock(message);
+        // 打印信息到日志
+        sys_user_logger.info(s, args);
+        // 获取客户端操作系统
+        String os = userAgent.getOperatingSystem().getName();
+        // 获取客户端浏览器
+        String browser = userAgent.getBrowser().getName();
+
+        // 封装对象
+        SysAccessLog log = new SysAccessLog();
+        log.setUserName(username);
+        log.setIpaddr(ip);
+        log.setLocation(address);
+        log.setBrowser(browser);
+        log.setOs(os);
+        log.setMsg(message);
+        // 日志状态
+        if (StringUtils.equalsAny(status, Constants.LOGIN_SUCCESS, Constants.LOGOUT, Constants.REGISTER)) {
+            log.setStatus(Constants.SUCCESS);
+        } else if (Constants.LOGIN_FAIL.equals(status)) {
+            log.setStatus(Constants.FAIL);
+        }
+        // 插入数据
+        return sysAccessLogRepository.save(log).then();
     }
 
     /**

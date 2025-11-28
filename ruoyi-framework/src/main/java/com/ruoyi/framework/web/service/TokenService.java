@@ -8,7 +8,6 @@ import com.ruoyi.common.utils.ip.IpUtils;
 import com.ruoyi.common.utils.uuid.IdUtils;
 import com.ruoyi.framework.redis.ReactiveRedisUtils;
 import com.ruoyi.framework.security.LoginUser;
-import com.ruoyi.framework.web.ReactiveRequestContextHolder;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -102,16 +101,16 @@ public class TokenService {
      * @param loginUser 用户信息
      * @return 令牌
      */
-    public String createToken(LoginUser loginUser) {
+    public Mono<String> createToken(LoginUser loginUser, ServerWebExchange exchange) {
         String token = IdUtils.fastUUID();
         loginUser.setToken(token);
-        setUserAgent(loginUser);
+        setUserAgent(loginUser, exchange);
         refreshToken(loginUser);
 
         Map<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, token);
         claims.put(Constants.JWT_USERNAME, loginUser.getUsername());
-        return createToken(claims);
+        return Mono.just(createToken(claims));
     }
 
     /**
@@ -146,16 +145,13 @@ public class TokenService {
      *
      * @param loginUser 登录信息
      */
-    public void setUserAgent(LoginUser loginUser) {
-        ReactiveRequestContextHolder.getExchange()
-                .subscribe(exchange -> {
-                    UserAgent userAgent = UserAgent.parseUserAgentString(exchange.getRequest().getHeaders().getFirst("User-Agent"));
-                    String ip = IpUtils.getIpAddr(exchange);
-                    loginUser.setIpaddr(ip);
-                    loginUser.setLoginLocation(AddressUtils.getRealAddressByIP(ip));
-                    loginUser.setBrowser(userAgent.getBrowser().getName());
-                    loginUser.setOs(userAgent.getOperatingSystem().getName());
-                });
+    public void setUserAgent(LoginUser loginUser, ServerWebExchange exchange) {
+        UserAgent userAgent = UserAgent.parseUserAgentString(exchange.getRequest().getHeaders().getFirst("User-Agent"));
+        String ip = IpUtils.getIpAddr(exchange);
+        loginUser.setIpaddr(ip);
+        loginUser.setLoginLocation(AddressUtils.getRealAddressByIP(ip));
+        loginUser.setBrowser(userAgent.getBrowser().getName());
+        loginUser.setOs(userAgent.getOperatingSystem().getName());
     }
 
     /**

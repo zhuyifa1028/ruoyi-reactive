@@ -6,7 +6,6 @@ import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.utils.MessageUtils;
 import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.manager.AsyncManager;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.framework.web.service.TokenService;
 import jakarta.annotation.Resource;
@@ -27,7 +26,7 @@ import reactor.core.publisher.Mono;
 public class LogoutSuccessHandlerImpl implements ServerLogoutSuccessHandler {
 
     @Resource
-    private AsyncFactory AsyncFactory;
+    private AsyncFactory asyncFactory;
 
     @Resource
     private ObjectMapper objectMapper;
@@ -47,7 +46,7 @@ public class LogoutSuccessHandlerImpl implements ServerLogoutSuccessHandler {
                         // 删除用户缓存记录
                         tokenService.delLoginUser(loginUser.getToken());
                         // 记录用户退出日志
-                        AsyncManager.me().execute(AsyncFactory.recordLogininfor(exchange.getExchange(), userName, Constants.LOGOUT, MessageUtils.message("user.logout.success")));
+                        return asyncFactory.recordAccessInfo(exchange.getExchange(), userName, Constants.LOGOUT, MessageUtils.message("user.logout.success"));
                     }
                     return Mono.empty();
                 })
