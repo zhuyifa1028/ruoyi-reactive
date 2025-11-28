@@ -5,8 +5,6 @@ import org.aspectj.lang.JoinPoint;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.TimerTask;
-
 /**
  * 异步工厂（产生任务用）
  *
@@ -20,8 +18,8 @@ public interface AsyncFactory {
     Mono<Void> recordAccessInfo(ServerWebExchange exchange, String username, String status, String message, Object... args);
 
     /**
-     * 操作日志记录
+     * 记录操作信息
      */
-    TimerTask recordOper(final JoinPoint joinPoint, Log controllerLog, final Throwable e, Object jsonResult, ServerWebExchange exchange, long costTime);
+    Mono<Void> recordOperateInfo(ServerWebExchange exchange, JoinPoint joinPoint, Log controllerLog, Throwable e, Object jsonResult, long startTime);
 
 }

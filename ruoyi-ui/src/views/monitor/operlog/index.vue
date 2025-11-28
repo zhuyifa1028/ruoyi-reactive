@@ -62,12 +62,11 @@
         <el-date-picker
           v-model="dateRange"
           style="width: 240px"
-          value-format="yyyy-MM-dd HH:mm:ss"
+          value-format="yyyy-MM-dd"
           type="daterange"
           range-separator="-"
           start-placeholder="开始日期"
           end-placeholder="结束日期"
-          :default-time="['00:00:00', '23:59:59']"
         ></el-date-picker>
       </el-form-item>
       <el-form-item>
@@ -158,7 +157,7 @@
     <pagination
       v-show="total>0"
       :total="total"
-      :page.sync="queryParams.pageNum"
+      :page.sync="queryParams.pageNumber"
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
@@ -212,7 +211,7 @@
 </template>
 
 <script>
-import {list, delOperlog, cleanOperlog} from "@/api/monitor/operlog"
+import { cleanOperlog, delOperlog, list } from "@/api/monitor/operlog"
 
 export default {
   name: "Operlog",
@@ -241,7 +240,7 @@ export default {
       form: {},
       // 查询参数
       queryParams: {
-        pageNum: 1,
+        pageNumber: 1,
         pageSize: 10,
         operIp: undefined,
         title: undefined,
@@ -259,26 +258,26 @@ export default {
     getList() {
       this.loading = true
       list(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
-          this.list = response.rows
+        this.list = response.data
           this.total = response.total
           this.loading = false
         }
       )
     },
     // 操作日志类型字典翻译
-    typeFormat(row, column) {
+    typeFormat(row) {
       return this.selectDictLabel(this.dict.type.sys_oper_type, row.businessType)
     },
     /** 搜索按钮操作 */
     handleQuery() {
-      this.queryParams.pageNum = 1
+      this.queryParams.pageNumber = 1
       this.getList()
     },
     /** 重置按钮操作 */
     resetQuery() {
       this.dateRange = []
       this.resetForm("queryForm")
-      this.queryParams.pageNum = 1
+      this.queryParams.pageNumber = 1
       this.$refs.tables.sort(this.defaultSort.prop, this.defaultSort.order)
     },
     /** 多选框选中数据 */
@@ -287,7 +286,7 @@ export default {
       this.multiple = !selection.length
     },
     /** 排序触发事件 */
-    handleSortChange(column, prop, order) {
+    handleSortChange(column) {
       this.queryParams.orderByColumn = column.prop
       this.queryParams.isAsc = column.order
       this.getList()

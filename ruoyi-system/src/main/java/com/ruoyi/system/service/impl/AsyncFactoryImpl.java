@@ -12,13 +12,12 @@ import com.ruoyi.common.utils.LogUtils;
 import com.ruoyi.common.utils.StringUtils;
 import com.ruoyi.common.utils.ip.AddressUtils;
 import com.ruoyi.common.utils.ip.IpUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
 import com.ruoyi.framework.manager.factory.AsyncFactory;
 import com.ruoyi.framework.security.ReactiveSecurityUtils;
-import com.ruoyi.system.domain.SysOperLog;
 import com.ruoyi.system.entity.SysAccessLog;
+import com.ruoyi.system.entity.SysOperateLog;
 import com.ruoyi.system.repository.SysAccessLogRepository;
-import com.ruoyi.system.service.ISysOperLogService;
+import com.ruoyi.system.repository.SysOperateLogRepository;
 import eu.bitwalker.useragentutils.UserAgent;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,9 +33,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
-import java.util.TimerTask;
+import java.util.Objects;
 
 /**
  * 异步工厂（产生任务用）
@@ -55,6 +55,8 @@ public class AsyncFactoryImpl implements AsyncFactory {
 
     @Resource
     private SysAccessLogRepository sysAccessLogRepository;
+    @Resource
+    private SysOperateLogRepository sysOperateLogRepository;
 
     /**
      * 记录访问信息
@@ -94,27 +96,14 @@ public class AsyncFactoryImpl implements AsyncFactory {
     }
 
     /**
-     * 操作日志记录
+     * 记录操作信息
      */
-    public TimerTask recordOper(final JoinPoint joinPoint, Log controllerLog, final Throwable e, Object jsonResult, ServerWebExchange exchange, long costTime) {
+    public Mono<Void> recordOperateInfo(ServerWebExchange exchange, JoinPoint joinPoint, Log controllerLog, Throwable e, Object jsonResult, long startTime) {
         // *========数据库日志=========*//
-        SysOperLog operLog = new SysOperLog();
+        SysOperateLog operLog = new SysOperateLog();
         operLog.setStatus(BusinessStatus.SUCCESS.ordinal());
 
-        // 获取当前的用户
-        ReactiveSecurityUtils.getLoginUser()
-                .subscribe(loginUser -> {
-                    if (loginUser != null) {
-                        operLog.setOperName(loginUser.getUsername());
-//                        SysUser currentUser = loginUser.getUser();
-//                        if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
-//                            operLog.setDeptName(currentUser.getDept().getDeptName());
-//                        }
-                    }
-                });
-
-
-        if (e != null) {
+        if (Objects.nonNull(e)) {
             operLog.setStatus(BusinessStatus.FAIL.ordinal());
             operLog.setErrorMsg(StringUtils.substring(Convert.toStr(e.getMessage(), ExceptionUtil.getExceptionMessage(e)), 0, 2000));
         }
@@ -123,7 +112,8 @@ public class AsyncFactoryImpl implements AsyncFactory {
         String methodName = joinPoint.getSignature().getName();
         operLog.setMethod(className + "." + methodName + "()");
         // 设置消耗时间
-        operLog.setCostTime(costTime);
+        operLog.setCostTime(System.currentTimeMillis() - startTime);
+        operLog.setOperTime(LocalDateTime.now());
 
         // 请求的地址
         operLog.setOperIp(IpUtils.getIpAddr(exchange));
@@ -134,14 +124,23 @@ public class AsyncFactoryImpl implements AsyncFactory {
         // 处理设置注解上的参数
         getControllerMethodDescription(exchange.getRequest(), joinPoint, controllerLog, operLog, jsonResult);
 
-        return new TimerTask() {
-            @Override
-            public void run() {
-                // 远程查询操作地点
-                operLog.setOperLocation(AddressUtils.getRealAddressByIP(operLog.getOperIp()));
-                SpringUtils.getBean(ISysOperLogService.class).insertOperlog(operLog);
-            }
-        };
+        // 远程查询操作地点
+        operLog.setOperLocation(AddressUtils.getRealAddressByIP(operLog.getOperIp()));
+
+        // 获取当前的用户
+        return ReactiveSecurityUtils.getLoginUser()
+                .map(loginUser -> {
+                    if (loginUser != null) {
+                        operLog.setOperName(loginUser.getUsername());
+//                        SysUser currentUser = loginUser.getUser();
+//                        if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept())) {
+//                            operLog.setDeptName(currentUser.getDept().getDeptName());
+//                        }
+                    }
+                    return operLog;
+                })
+                .then(sysOperateLogRepository.save(operLog))
+                .then();
     }
 
     /**
@@ -150,7 +149,7 @@ public class AsyncFactoryImpl implements AsyncFactory {
      * @param log     日志
      * @param operLog 操作日志
      */
-    public void getControllerMethodDescription(ServerHttpRequest request, JoinPoint joinPoint, Log log, SysOperLog operLog, Object jsonResult) {
+    public void getControllerMethodDescription(ServerHttpRequest request, JoinPoint joinPoint, Log log, SysOperateLog operLog, Object jsonResult) {
         // 设置action动作
         operLog.setBusinessType(log.businessType().ordinal());
         // 设置标题
@@ -172,7 +171,7 @@ public class AsyncFactoryImpl implements AsyncFactory {
      * 获取请求的参数，放到log中
      *
      */
-    private void setRequestValue(ServerHttpRequest request, JoinPoint joinPoint, SysOperLog operLog, String[] excludeParamNames) {
+    private void setRequestValue(ServerHttpRequest request, JoinPoint joinPoint, SysOperateLog operLog, String[] excludeParamNames) {
         Map<?, ?> paramsMap = request.getQueryParams();
         String requestMethod = operLog.getRequestMethod();
         if (StringUtils.isEmpty(paramsMap) && StringUtils.equalsAny(requestMethod, HttpMethod.PUT.name(), HttpMethod.POST.name(), HttpMethod.DELETE.name())) {

@@ -6,7 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Schema(description = "SysLoginLogVO")
+@Schema(description = "SysAccessLogVO")
 @Data
 public class SysAccessLogVO implements Serializable {
 
