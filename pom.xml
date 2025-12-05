@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.dromara</groupId>
+    <groupId>com.github.yingzhong</groupId>
     <artifactId>ruoyi-reactive</artifactId>
     <version>${revision}</version>
+    <packaging>pom</packaging>
 
     <name>ruoyi-reactive</name>
     <url>https://gitee.com/dromara/RuoYi-Vue-Plus</url>
     <description>Dromara RuoYi-Vue-Plus多租户管理系统</description>
+
+    <modules>
+        <module>ruoyi-framework</module>
+        <module>ruoyi-module</module>
+        <module>ruoyi-server</module>
+    </modules>
 
     <properties>
         <revision>5.5.1</revision>
@@ -60,43 +66,6 @@
         <skipTests>true</skipTests>
     </properties>
 
-    <profiles>
-        <profile>
-            <id>local</id>
-            <properties>
-                <!-- 环境标识，需要与配置文件的名称相对应 -->
-                <profiles.active>local</profiles.active>
-                <logging.level>info</logging.level>
-                <monitor.username>ruoyi</monitor.username>
-                <monitor.password>123456</monitor.password>
-            </properties>
-        </profile>
-        <profile>
-            <id>dev</id>
-            <properties>
-                <!-- 环境标识，需要与配置文件的名称相对应 -->
-                <profiles.active>dev</profiles.active>
-                <logging.level>info</logging.level>
-                <monitor.username>ruoyi</monitor.username>
-                <monitor.password>123456</monitor.password>
-            </properties>
-            <activation>
-                <!-- 默认环境 -->
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
-        <profile>
-            <id>prod</id>
-            <properties>
-                <profiles.active>prod</profiles.active>
-                <logging.level>warn</logging.level>
-                <monitor.username>ruoyi</monitor.username>
-                <monitor.password>123456</monitor.password>
-            </properties>
-        </profile>
-    </profiles>
-
-    <!-- 依赖声明 -->
     <dependencyManagement>
         <dependencies>
 
@@ -114,15 +83,6 @@
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-bom</artifactId>
                 <version>${hutool.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- common 的依赖配置-->
-            <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-common-bom</artifactId>
-                <version>${revision}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -326,47 +286,198 @@
                 <version>${fastjson.version}</version>
             </dependency>
 
+            <!-- 核心模块 -->
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-system</artifactId>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-core</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 接口模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-doc</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- excel -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-excel</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 幂等 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-idempotent</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 调度模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-job</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 日志记录 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-log</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 邮件服务 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-mail</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 数据库服务 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-mybatis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- OSS -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-oss</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 限流 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-ratelimiter</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 缓存服务 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-redis</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- satoken -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-satoken</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 安全模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-security</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 短信模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-sms</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-social</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- web服务 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-web</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 翻译模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-translation</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 脱敏模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-sensitive</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 序列化模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-json</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 数据库加解密模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-encrypt</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- 租户模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-tenant</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- WebSocket模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-websocket</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <!-- SSE模块 -->
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-common-sse</artifactId>
                 <version>${revision}</version>
             </dependency>
 
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-job</artifactId>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-module-system</artifactId>
                 <version>${revision}</version>
             </dependency>
-
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-generator</artifactId>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-module-job</artifactId>
                 <version>${revision}</version>
             </dependency>
-
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-demo</artifactId>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-module-generator</artifactId>
                 <version>${revision}</version>
             </dependency>
-
+            <dependency>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-module-demo</artifactId>
+                <version>${revision}</version>
+            </dependency>
             <!--  工作流模块  -->
             <dependency>
-                <groupId>org.dromara</groupId>
-                <artifactId>ruoyi-workflow</artifactId>
+                <groupId>com.github.yingzhong</groupId>
+                <artifactId>ruoyi-module-workflow</artifactId>
                 <version>${revision}</version>
             </dependency>
 
         </dependencies>
     </dependencyManagement>
 
-    <modules>
-        <module>ruoyi-admin</module>
-        <module>ruoyi-common</module>
-        <module>ruoyi-extend</module>
-        <module>ruoyi-modules</module>
-    </modules>
-    <packaging>pom</packaging>
+    <repositories>
+        <repository>
+            <id>public</id>
+            <name>huawei nexus</name>
+            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>public</id>
+            <name>huawei nexus</name>
+            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
@@ -470,30 +581,41 @@
         </resources>
     </build>
 
-    <repositories>
-        <repository>
-            <id>public</id>
-            <name>huawei nexus</name>
-            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>public</id>
-            <name>huawei nexus</name>
-            <url>https://mirrors.huaweicloud.com/repository/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
+    <profiles>
+        <profile>
+            <id>local</id>
+            <properties>
+                <!-- 环境标识，需要与配置文件的名称相对应 -->
+                <profiles.active>local</profiles.active>
+                <logging.level>info</logging.level>
+                <monitor.username>ruoyi</monitor.username>
+                <monitor.password>123456</monitor.password>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <!-- 环境标识，需要与配置文件的名称相对应 -->
+                <profiles.active>dev</profiles.active>
+                <logging.level>info</logging.level>
+                <monitor.username>ruoyi</monitor.username>
+                <monitor.password>123456</monitor.password>
+            </properties>
+            <activation>
+                <!-- 默认环境 -->
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <profiles.active>prod</profiles.active>
+                <logging.level>warn</logging.level>
+                <monitor.username>ruoyi</monitor.username>
+                <monitor.password>123456</monitor.password>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
 
