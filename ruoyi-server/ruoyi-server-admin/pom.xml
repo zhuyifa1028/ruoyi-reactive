@@ -55,11 +55,6 @@
 
         <dependency>
             <groupId>com.github.yingzhong</groupId>
-            <artifactId>ruoyi-common-ratelimiter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.yingzhong</groupId>
             <artifactId>ruoyi-common-mail</artifactId>
         </dependency>
 

@@ -51,6 +51,8 @@ user:
 
 # Spring配置
 spring:
+  main:
+    web-application-type: reactive
   application:
     name: RuoYi-Vue-Plus
   threads:
@@ -68,6 +70,9 @@ spring:
   messages:
     # 国际化资源文件路径
     basename: i18n/messages
+  web:
+    # 中文
+    locale: zh_CN
   profiles:
     active: @profiles.active@
   # 文件上传

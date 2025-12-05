@@ -1,5 +1,6 @@
 package org.dromara.workflow.controller;
 
+import com.github.yingzhong.framework.webflux.core.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.domain.R;
 import org.dromara.common.idempotent.annotation.RepeatSubmit;
@@ -7,7 +8,6 @@ import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
-import org.dromara.common.web.core.BaseController;
 import org.dromara.warm.flow.core.service.InsService;
 import org.dromara.workflow.common.ConditionalOnEnable;
 import org.dromara.workflow.domain.bo.FlowCancelBo;

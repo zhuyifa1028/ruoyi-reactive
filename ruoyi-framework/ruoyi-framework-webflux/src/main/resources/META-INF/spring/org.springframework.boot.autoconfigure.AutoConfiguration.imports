@@ -1,0 +1,3 @@
+com.github.yingzhong.framework.webflux.config.CaptchaConfig
+com.github.yingzhong.framework.webflux.config.FilterConfig
+com.github.yingzhong.framework.webflux.config.ResourcesConfig

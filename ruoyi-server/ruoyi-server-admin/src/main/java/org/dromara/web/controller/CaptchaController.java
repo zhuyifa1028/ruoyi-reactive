@@ -5,6 +5,8 @@ import cn.hutool.captcha.AbstractCaptcha;
 import cn.hutool.captcha.generator.CodeGenerator;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import com.github.yingzhong.framework.webflux.config.properties.CaptchaProperties;
+import com.github.yingzhong.framework.webflux.enums.CaptchaType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,11 +19,7 @@ import org.dromara.common.core.utils.StringUtils;
 import org.dromara.common.core.utils.reflect.ReflectUtils;
 import org.dromara.common.mail.config.properties.MailProperties;
 import org.dromara.common.mail.utils.MailUtils;
-import org.dromara.common.ratelimiter.annotation.RateLimiter;
-import org.dromara.common.ratelimiter.enums.LimitType;
 import org.dromara.common.redis.utils.RedisUtils;
-import org.dromara.common.web.config.properties.CaptchaProperties;
-import org.dromara.common.web.enums.CaptchaType;
 import org.dromara.sms4j.api.SmsBlend;
 import org.dromara.sms4j.api.entity.SmsResponse;
 import org.dromara.sms4j.core.factory.SmsFactory;
@@ -56,7 +54,7 @@ public class CaptchaController {
      *
      * @param phonenumber 用户手机号
      */
-    @RateLimiter(key = "#phonenumber", time = 60, count = 1)
+//    @RateLimiter(key = "#phonenumber", time = 60, count = 1)
     @GetMapping("/resource/sms/code")
     public R<Void> smsCode(@NotBlank(message = "{user.phonenumber.not.blank}") String phonenumber) {
         String key = GlobalConstants.CAPTCHA_CODE_KEY + phonenumber;
@@ -93,7 +91,7 @@ public class CaptchaController {
      * 邮箱验证码
      * 独立方法避免验证码关闭之后仍然走限流
      */
-    @RateLimiter(key = "#email", time = 60, count = 1)
+//    @RateLimiter(key = "#email", time = 60, count = 1)
     public void emailCodeImpl(String email) {
         String key = GlobalConstants.CAPTCHA_CODE_KEY + email;
         String code = RandomUtil.randomNumbers(4);
@@ -124,7 +122,7 @@ public class CaptchaController {
      * 生成验证码
      * 独立方法避免验证码关闭之后仍然走限流
      */
-    @RateLimiter(time = 60, count = 10, limitType = LimitType.IP)
+//    @RateLimiter(time = 60, count = 10, limitType = LimitType.IP)
     public CaptchaVo getCodeImpl() {
         // 保存验证码信息
         String uuid = IdUtil.simpleUUID();

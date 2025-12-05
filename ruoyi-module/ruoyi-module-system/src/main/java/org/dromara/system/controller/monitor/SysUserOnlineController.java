@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
+import com.github.yingzhong.framework.webflux.core.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.constant.CacheConstants;
 import org.dromara.common.core.domain.R;
@@ -15,7 +16,6 @@ import org.dromara.common.log.annotation.Log;
 import org.dromara.common.log.enums.BusinessType;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
 import org.dromara.common.redis.utils.RedisUtils;
-import org.dromara.common.web.core.BaseController;
 import org.dromara.system.domain.SysUserOnline;
 import org.springframework.web.bind.annotation.*;
 

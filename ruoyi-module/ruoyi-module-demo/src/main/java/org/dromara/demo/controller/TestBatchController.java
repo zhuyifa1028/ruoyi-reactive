@@ -1,9 +1,9 @@
 package org.dromara.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.github.yingzhong.framework.webflux.core.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.domain.R;
-import org.dromara.common.web.core.BaseController;
 import org.dromara.demo.domain.TestDemo;
 import org.dromara.demo.mapper.TestDemoMapper;
 import org.springframework.web.bind.annotation.DeleteMapping;

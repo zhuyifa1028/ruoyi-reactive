@@ -40,7 +40,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.yingzhong</groupId>
-            <artifactId>ruoyi-common-web</artifactId>
+            <artifactId>ruoyi-framework-webflux</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.yingzhong</groupId>

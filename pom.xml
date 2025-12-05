@@ -378,7 +378,7 @@
             <!-- web服务 -->
             <dependency>
                 <groupId>com.github.yingzhong</groupId>
-                <artifactId>ruoyi-common-web</artifactId>
+                <artifactId>ruoyi-framework-webflux</artifactId>
                 <version>${revision}</version>
             </dependency>
             <!-- 翻译模块 -->
