@@ -3,13 +3,13 @@ package org.dromara.common.mybatis.handler;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpStatus;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.github.yingzhong.framework.security.utils.LoginHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.reflection.MetaObject;
 import org.dromara.common.core.domain.model.LoginUser;
 import org.dromara.common.core.exception.ServiceException;
 import org.dromara.common.core.utils.ObjectUtils;
 import org.dromara.common.mybatis.core.domain.BaseEntity;
-import org.dromara.common.satoken.utils.LoginHelper;
 
 import java.util.Date;
 

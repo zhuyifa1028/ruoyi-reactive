@@ -1,9 +1,9 @@
 package org.dromara.system.service.impl;
 
+import com.github.yingzhong.framework.security.utils.LoginHelper;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.constant.TenantConstants;
 import org.dromara.common.core.service.PermissionService;
-import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.system.service.ISysMenuService;
 import org.dromara.system.service.ISysPermissionService;
 import org.dromara.system.service.ISysRoleService;

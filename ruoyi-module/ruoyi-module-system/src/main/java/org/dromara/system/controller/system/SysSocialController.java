@@ -1,9 +1,9 @@
 package org.dromara.system.controller.system;
 
+import com.github.yingzhong.framework.security.utils.LoginHelper;
 import com.github.yingzhong.framework.webflux.core.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.domain.R;
-import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.system.domain.vo.SysSocialVo;
 import org.dromara.system.service.ISysSocialService;
 import org.springframework.validation.annotation.Validated;

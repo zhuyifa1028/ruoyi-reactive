@@ -26,8 +26,6 @@
         <module>ruoyi-common-oss</module>
         <module>ruoyi-common-ratelimiter</module>
         <module>ruoyi-common-redis</module>
-        <module>ruoyi-common-satoken</module>
-        <module>ruoyi-common-security</module>
         <module>ruoyi-common-sms</module>
         <module>ruoyi-common-translation</module>
         <module>ruoyi-common-sensitive</module>
@@ -37,6 +35,7 @@
         <module>ruoyi-common-websocket</module>
         <module>ruoyi-common-sse</module>
         <module>ruoyi-framework-webflux</module>
+        <module>ruoyi-framework-security</module>
     </modules>
 
 </project>

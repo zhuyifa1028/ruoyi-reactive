@@ -1,8 +1,8 @@
 package org.dromara.common.tenant.core;
 
+import com.github.yingzhong.framework.security.core.dao.PlusSaTokenDao;
 import org.dromara.common.core.constant.GlobalConstants;
 import org.dromara.common.redis.utils.RedisUtils;
-import org.dromara.common.satoken.core.dao.PlusSaTokenDao;
 
 import java.time.Duration;
 import java.util.List;

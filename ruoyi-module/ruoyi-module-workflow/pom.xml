@@ -64,7 +64,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.yingzhong</groupId>
-            <artifactId>ruoyi-common-security</artifactId>
+            <artifactId>ruoyi-framework-security</artifactId>
         </dependency>
         <dependency>
             <groupId>org.dromara.warm</groupId>

@@ -5,6 +5,7 @@ import cn.hutool.http.useragent.UserAgent;
 import cn.hutool.http.useragent.UserAgentUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.yingzhong.framework.security.utils.LoginHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,6 @@ import org.dromara.common.core.utils.ip.AddressUtils;
 import org.dromara.common.log.event.LogininforEvent;
 import org.dromara.common.mybatis.core.page.PageQuery;
 import org.dromara.common.mybatis.core.page.TableDataInfo;
-import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.system.domain.SysLogininfor;
 import org.dromara.system.domain.bo.SysLogininforBo;
 import org.dromara.system.domain.vo.SysClientVo;
@@ -66,14 +66,13 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         }
 
         String address = AddressUtils.getRealAddressByIP(ip);
-        StringBuilder s = new StringBuilder();
-        s.append(getBlock(ip));
-        s.append(address);
-        s.append(getBlock(logininforEvent.getUsername()));
-        s.append(getBlock(logininforEvent.getStatus()));
-        s.append(getBlock(logininforEvent.getMessage()));
+        String s = getBlock(ip) +
+            address +
+            getBlock(logininforEvent.getUsername()) +
+            getBlock(logininforEvent.getStatus()) +
+            getBlock(logininforEvent.getMessage());
         // 打印信息到日志
-        log.info(s.toString(), logininforEvent.getArgs());
+        log.info(s, logininforEvent.getArgs());
         // 获取客户端操作系统
         String os = userAgent.getOs().getName();
         // 获取客户端浏览器
@@ -105,7 +104,7 @@ public class SysLogininforServiceImpl implements ISysLogininforService {
         if (msg == null) {
             msg = "";
         }
-        return "[" + msg.toString() + "]";
+        return "[" + msg + "]";
     }
 
     /**

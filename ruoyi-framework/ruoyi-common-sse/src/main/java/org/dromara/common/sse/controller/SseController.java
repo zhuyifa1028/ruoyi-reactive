@@ -2,9 +2,9 @@ package org.dromara.common.sse.controller;
 
 import cn.dev33.satoken.annotation.SaIgnore;
 import cn.dev33.satoken.stp.StpUtil;
+import com.github.yingzhong.framework.security.utils.LoginHelper;
 import lombok.RequiredArgsConstructor;
 import org.dromara.common.core.domain.R;
-import org.dromara.common.satoken.utils.LoginHelper;
 import org.dromara.common.sse.core.SseEmitterManager;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

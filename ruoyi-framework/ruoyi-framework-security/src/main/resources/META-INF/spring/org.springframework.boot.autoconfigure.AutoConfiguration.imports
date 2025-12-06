@@ -1,0 +1,3 @@
+com.github.yingzhong.framework.security.handler.AllUrlHandler
+com.github.yingzhong.framework.security.config.SaTokenConfig
+com.github.yingzhong.framework.security.config.SecurityConfig
